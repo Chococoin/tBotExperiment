@@ -1,0 +1,26 @@
+{
+  "name": "t_experiment",
+  "version": "1.0.0",
+  "description": "",
+  "main": "truffle-config.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@sendgrid/mail": "^7.2.4",
+    "@truffle/hdwallet-provider": "^1.0.42",
+    "axios": "^0.19.2",
+    "ethereumjs-units": "^0.2.0",
+    "mysql2": "^2.1.0",
+    "telegraf": "^3.38.0",
+    "update": "^0.7.4",
+    "upgrade": "^1.1.0",
+    "web3": "^1.2.11"
+  }
+}
