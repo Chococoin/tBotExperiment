@@ -18,3 +18,4 @@ At this poin you are invited to fork and clone this repository to create yor own
 
 The sky is the limits.
 
+This branch is an intent to use golang/cobra as a manager of bot's processes.
