@@ -16,5 +16,5 @@ Create your own token with a standard ERC-20 SmartContract.
 
 At this poin you are invited to fork and clone this repository to create yor own super roBOT in telegram. Run your code in local and make your friends enjoy the automatics services of your super poweful and galant bot. 
 
-The sky is the limits.
+The sky is the limit.
 
