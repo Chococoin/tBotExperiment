@@ -90,10 +90,20 @@ app.hears(/^Come posso aiutare*/i, ({ replyWithMarkdown }) => replyWithMarkdown(
      }, '')} Come vuoi darci una mano?`, Markup.keyboard(products.map(p => p.name)).oneTime().resize().extra()
 ))
 
-app.command('start', (ctx) => {
-    console.log(`${ctx.from.first_name} is investigating 🕵🏽‍♂️ the code from console log.`)
-    console.log(ctx.update.message.entities)
+app.command('start', ({ reply }) => {
+    reply('Here the beging of your adventure!')
 })
+
+app.command('debbug', (ctx) => {
+    console.log(`${ctx.from.first_name} is investigating 🕵 the code from console log.`)
+    console.log(ctx.update.message.entities)
+
+})
+
+app.command('aaa', (ctx) => {
+    console.log("context", ctx.reply());
+})
+
 
 // Order product
 products.forEach(p => {
@@ -109,25 +119,27 @@ app.on('successful_payment', (ctx) => {
     console.log(`${ctx.from.first_name} (${ctx.from.username}) just payed ${ctx.message.successful_payment.total_amount / 100} €.`)
 })
 
-app.on('location', (ctx) => {
-    let lat = ctx.update.message.location.latitude
-    let lon = ctx.update.message.location.longitude
-    axios.get('https://api.what3words.com/v3/convert-to-3wa', {
-        params: {
-          coordinates: `${lat},${lon}`,
-          language: 'IT',
-          what3WordsApiKey
-        }
-    })
-    .then(function (response) {
-      console.log(response)
-    })
-    .catch(function (error) {
-      console.log(error)
-    })
-    .finally(function () {
-      console.log("Finish")
-    })
+app.command('location', (ctx) => {
+    console.log(ctx.update.message)
+    // let lat = ctx.update.message.location.latitude
+    // let lon = ctx.update.message.location.longitude
+    // let lang = ctx.update.message.language_code
+    // axios.get('https://api.what3words.com/v3/convert-to-3wa', {
+    //     params: {
+    //       coordinates: `${lat},${lon}`,
+    //       language: lang,
+    //       what3WordsApiKey
+    //     }
+    // })
+    // .then(function (response) {
+    //   console.log(response)
+    // })
+    // .catch(function (error) {
+    //   console.log(error)
+    // })
+    // .finally(function () {
+    //   console.log("Finish")
+    // })
 })
 
 app.startPolling()
