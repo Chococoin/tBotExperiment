@@ -10,11 +10,12 @@ import (
 var statusCmd = &cobra.Command{
 	Use:   "status",
 	Short: "Show current status of bot",
-	Long: `Bot will run as deamon with pm2.
-		   This Command will start a process to run the
-		   bot if it isn't working. This command is utile
-		   when a user don't know the state of a bot and
-		   wants to decide after if start it or not.`,
+	Long: `
+	Bot will run as deamon with pm2.
+	This Command will start a process to run the
+	bot if it isn't working. This command is utile
+	when a user don't know the state of a bot and
+	wants to decide after if start it or not.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("Status of feature 'TODO'.")
 	},
