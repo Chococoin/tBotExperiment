@@ -24,10 +24,10 @@ var statusCmd = &cobra.Command{
 
 func sysDiagnostic() {
   if runtime.GOOS == "window" {
-        fmt.Println("Currently, clibot 🤖 can't be execute on a windows machine.")
-    } else {
-        exeStatus()
-    }
+    fmt.Println("Currently, clibot 🤖 can't be executed on a windows machine.")
+  } else {
+    exeStatus()
+  }
 }
 
 func exeStatus() {
