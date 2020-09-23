@@ -53,26 +53,15 @@ func install(nodeCheck string, npmCheck string) {
 
 
   if err != nil {
-    // TODO if default directory doesn't exist create then it.
-    errLogInstall(err)
-    os.Exit(102)
+    createDefaultDir(dirDefault)
   }
 
   if len(cmd) != 0 {
     f.Printf("\n\tElements in dir:\n\t %s", string(cmd[:]))
     f.Println("\tYou need to start a process with the default directory empty.\n")
-    deleteOldDefaultDir(dirDefault)
-    os.Exit(103)
+    askDeleteOldDefaultDir(dirDefault)
   }
-  
-	// Creation bot directories in default position. 
-  err = os.Mkdir(dirDefault, 0755)
-
-  if err != nil {
-    errLogInstall(err)
-  } else {
-    f.Printf("New super bot created in %s directory\n", dirDefault)
-  }
+  initNpm()
 } 
 
 func init() {
@@ -122,31 +111,74 @@ func npmCheck() string {
     return "NOT OK"
   } else {
     var output = string(out[:])
-    f.Printf("\t✅ npm Version: %s", output)
+    f.Printf("\t✅ npm Version: %s\n", output)
     return "OK"
   }
 }
 
-func deleteOldDefaultDir(arg string) {
+func createDefaultDir(arg string) {
+  reader := bufio.NewReader(os.Stdin)
+  f.Printf("Clibot will install you customed bot in %s\n", arg)
+  f.Println("Do you want to continue creating the bot default directory? (Yes or No)")
+  f.Print("-> ")
+  text, _ := reader.ReadString('\n')
+  if text == "Yes\n" {
+    f.Printf("Creating default dir at %s\n", arg)
+    createDir(arg)
+    // TODO: initialize npm. 
+    // initNpm()
+  } else if text == "No\n" {
+    f.Print("If you want make me create a 🤖, we need the default directory.\n")
+    f.Print("Comeback when you change your mind. 🧑‍💻\n")
+    os.Exit(1)
+  } else {
+    f.Println("\n\t🚸 (Answer must be 'Yes' or 'No')\n")
+    createDefaultDir(arg)
+  }
+}
+
+func askDeleteOldDefaultDir(arg string) {
   reader := bufio.NewReader(os.Stdin)
   f.Println("Do you want to reset the bot default directory? (Yes or No)")
   f.Print("-> ")
   text, _ := reader.ReadString('\n')
-  for text != "Yes\n" && text != "No\n" {
-    f.Println("\n\t🚸 (Answer must be 'Yes' or 'No')\n")
-    deleteOldDefaultDir(arg)
-  }
   if text == "Yes\n" {
-    err := os.RemoveAll(arg)
-    if err != nil {
-      f.Print("Error: Something wrong deleting %s try to do it manually", arg)
-      os.Exit(101)
+    // TODO f.Println("Because we ♥️ every 🤖, your old bot will be moved to a new directory.")
+    f.Println("Your old good bot will be deleted. Are you sure?")
+    f.Print("-> ")
+    text, _ = reader.ReadString('\n')
+    if text == "Yes\n" {
+      err := os.RemoveAll(arg)
+      f.Println("Old good bot deleted 😢. But today a new 🤖 will born 🥳")
+      if err != nil {
+        f.Print("Error: Something wrong deleting %s try to do it manually", arg)
+        os.Exit(101)
+      }
+    } else {
+      f.Println("Wise decision! Never kill a bot, we are your friends.\nDo your backup and comeback.\nSee you soon!")
     }
-    // TODO : continue with installation
-  } else {
-    f.Print("You've chosen to keep your old default directory. Installation interrupted.")
+  } else if text == "No\n" {
+    f.Println("You've chosen to keep your old default directory. Installation interrupted.")
     os.Exit(1)
+  } else {
+    f.Println("\n\t🚸 (Answer must be 'Yes' or 'No')\n")
+    askDeleteOldDefaultDir(arg)
   }
+}
+
+func createDir(path string) {
+  // Creation bot directories in default position. 
+  err := os.Mkdir(path, 0775)
+
+  if err != nil {
+    errLogInstall(err)
+  } else {
+    f.Printf("New 🤖 directory created at %s\n", path)
+  }
+}
+
+func initNpm() {
+  f.Println("Ready to create custom Package.json")
 }
 
 func errLogInstall(arg error) {
