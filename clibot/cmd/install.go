@@ -125,8 +125,7 @@ func createDefaultDir(arg string) {
   if text == "Yes\n" {
     f.Printf("Creating default dir at %s\n", arg)
     createDir(arg)
-    // TODO: initialize npm. 
-    // initNpm()
+    initNpm()
   } else if text == "No\n" {
     f.Print("If you want make me create a 🤖, we need the default directory.\n")
     f.Print("Comeback when you change your mind. 🧑‍💻\n")
@@ -178,7 +177,24 @@ func createDir(path string) {
 }
 
 func initNpm() {
-  f.Println("Ready to create custom Package.json")
+  f.Println("Select the features do you want for your bot..")
+  var customBotInfo []bool
+  askToken(customBotInfo)
+}
+
+func askToken(arg []bool) {
+  f.Println("Do you want your bot to uses an ERC-20 Token?")
+  f.Print("-> ")
+  reader := bufio.NewReader(os.Stdin)
+  text, _ := reader.ReadString('\n')
+  if text == "Yes\n" {
+    arg = append(arg, true)
+  } else if text == "NO\n" {
+    arg = append(arg, false)
+  } else {
+    f.Println("\n\t🚸 (Answer must be 'Yes' or 'No')\n")
+    askToken(arg)
+  }
 }
 
 func errLogInstall(arg error) {
