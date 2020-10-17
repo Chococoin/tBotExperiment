@@ -52,7 +52,7 @@ func install(nodeCheck string, npmCheck string) {
 
   output := strings.Split(string(out[:]), "/")
 
-  var dirDefault = "/" + output[1] + "/" + output[2] + "/mySuperBot"
+  var dirDefault = "/" + output[1] + "/" + strings.TrimSuffix(output[2], "\n") + "/mySuperBot"
 
   cmd, err := exec.Command("ls", dirDefault).Output()
 
@@ -176,23 +176,49 @@ func createDir(path string) {
   if err != nil {
     errLogInstall(err)
   } else {
-    f.Printf("New 🤖 directory created at %s\n", path)
+    f.Printf("New 🤖 directory created at %s\n\n", path)
   }
 }
 
 func initNpm(arg string) {
-  err := exec.Command("cd", arg, "&&", "npm", "init", "-y")
+  var textOfBashScript = "#!/bin/bash\nDIRECTORY=$1\ncd $DIRECTORY\npwd\nnpm init -y"
+
+  file, err := os.Create("installnpm.sh")
+  if err != nil {
+    f.Println("Cannot create file", err)
+    os.Exit(2)
+  }
+  _, err = file.WriteString(textOfBashScript)
+  if err != nil {
+    f.Println(err)
+    file.Close()
+    os.Exit(2)
+  }
+
+  err = file.Close()
+  if err != nil {
+    f.Println(err)
+    os.Exit(2)
+  }
+
+  _, err = exec.Command("sh", "installnpm.sh", arg).Output()
   if err != nil {
     f.Println("Could not initalize npm", err)
     os.Exit(2)
   }
+
+  err = os.Remove("installnpm.sh")
+  if err != nil {
+    f.Println("Could not delete installnpm.sh. Please delete it manually", err)
+  }
+
   f.Println("Select the features do you want for your bot..")
   var customBotInfo customOptions
   askFullOptions(customBotInfo)
 }
 
 func askFullOptions(arg customOptions) {
-  f.Println("Do you want your bot to use all features?")
+  f.Println("Do you want your bot to use all features? (Yes or No)")
   f.Print("-> ")
   reader := bufio.NewReader(os.Stdin)
   text, _ := reader.ReadString('\n')
