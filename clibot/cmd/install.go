@@ -12,9 +12,10 @@ import (
 )
 
 type customOptions struct {
-  token   bool
-  db      bool
-  mailing bool
+  token     bool
+  db        bool
+  mailing   bool
+  ecommerce bool
 }
 
 // statusCmd represents the status command
@@ -140,7 +141,7 @@ func createDefaultDir(arg string) {
     f.Print("Comeback when you change your mind. 🧑‍💻\n")
     os.Exit(1)
   } else {
-    f.Println("\n\t🚸 (Answer must be 'Yes' or 'No')\n")
+    answerAgainAndWell()
     createDefaultDir(arg)
   }
 }
@@ -162,15 +163,16 @@ func askDeleteOldDefaultDir(arg string) {
         f.Print("Error: Something wrong deleting %s try to do it manually", arg)
         os.Exit(101)
       }
+    } else if text == "No\n" {
+        noDeleteBot()
     } else {
-      f.Println("Wise decision! Never kill a bot, we are your friends.\nDo your backup and comeback.\nSee you soon!")
-      os.Exit(102)
+      answerAgainAndWell()
+      askDeleteOldDefaultDir(arg)
     }
   } else if text == "No\n" {
-    f.Println("You've chosen to keep your old default directory. Installation interrupted.")
-    os.Exit(1)
+      noDeleteBot()
   } else {
-    f.Println("\n\t🚸 (Answer must be 'Yes' or 'No')\n")
+    answerAgainAndWell()
     askDeleteOldDefaultDir(arg)
   }
 }
@@ -236,7 +238,7 @@ func askFullOptions(arg customOptions) {
   } else if text == "No\n" {
     askToken(arg)
   } else {
-    f.Println("\n\t🚸 (Answer must be 'Yes' or 'No')\n")
+    answerAgainAndWell()
     askFullOptions(arg)
   }
 }
@@ -248,34 +250,74 @@ func askToken(arg customOptions) {
   text, _ := reader.ReadString('\n')
   if text == "Yes\n" {
     arg.token = true
-    askDb()
+    askDb(arg)
   } else if text == "No\n" {
     arg.token = false
-    askDb()
+    askDb(arg)
   } else {
-    f.Println("\n\t🚸 (Answer must be 'Yes' or 'No')\n")
+    answerAgainAndWell()
     askToken(arg)
   }
 }
 
-func askDb(){
-  f.Println("TODO: Ask for a db")
+func askDb(arg customOptions){
+  f.Println("Do you want your bot to uses a database to remember users by name?")
+  f.Print("-> ")
+  reader := bufio.NewReader(os.Stdin)
+  text, _ := reader.ReadString('\n')
+  if text == "Yes\n" {
+    arg.db = true
+  } else if text == "No\n" {
+    arg.token = false
+  } else {
+    answerAgainAndWell()
+    askDb(arg)
+  }
 }
 
 func createPackageJSON(arg customOptions) {
   var textOfBashScript = "#!/bin/bash\nFEATURES=$1\ncd $FEATURES\nnpm i telegraf "
   if arg.token == true {
-    textOfBashScript = textOfBashScript + "web3" + " "
+    f.Println("Looking for Truffle framework in system")
+    cmd, err := exec.Command("Truffle", "-v").Output()
+    if err != nil {
+      f.Println("Error with exec.Command")
+      os.Exit(112)
+    } else {
+      f.Println(cmd)
+    }
+    f.Println("Installing Truffle Framework")
+    _, err = exec.Command("npm", "i", "-g", "truffle").Output()
+    if err != nil {
+      f.Print("Unable to install Truffle globally.")
+      os.Exit(100)
+      } else {
+        
+      }
+    textOfBashScript = textOfBashScript + "web3 " + "@truffle/hdwallet-provider "
   }
   if arg.db == true {
-    textOfBashScript = textOfBashScript + "mysql2" + " "
+    textOfBashScript = textOfBashScript + "mysql2 "
   }
   if arg.mailing == true {
-    textOfBashScript = textOfBashScript + "sendgrid" + " "
+    textOfBashScript = textOfBashScript + "@sendgrid/client "
+  }
+  if arg.ecommerce == true {
+
   }
   // TODO: Create package.JSON
   f.Printf("Creating package.json:\n with %s \n", textOfBashScript)
   os.Exit(105)
+}
+
+func noDeleteBot() {
+  f.Println("Wise decision! Never kill a bot, we are your friends.\nDo your backup and comeback.\nSee you soon!\n")
+  f.Println("You've chosen to keep your old default directory. Installation interrupted.")
+  os.Exit(1)
+}
+
+func answerAgainAndWell() {
+  f.Println("\n\t🚸 (Answer must be 'Yes' or 'No')\n")
 }
 
 func errLogInstall(arg error) {
