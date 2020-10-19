@@ -12,8 +12,9 @@ import (
 )
 
 type customOptions struct {
-  token bool
-  db    bool
+  token   bool
+  db      bool
+  mailing bool
 }
 
 // statusCmd represents the status command
@@ -55,15 +56,19 @@ func install(nodeCheck string, npmCheck string) {
   var dirDefault = "/" + output[1] + "/" + strings.TrimSuffix(output[2], "\n") + "/mySuperBot"
 
   cmd, err := exec.Command("ls", dirDefault).Output()
-
-
   if err != nil {
     createDefaultDir(dirDefault)
   }
 
+  directoryContent := strings.Split(strings.Trim(string(cmd[:]), "\n"), "\n")
+
   if len(cmd) != 0 {
-    f.Printf("\n\tElements in dir:\n\t %s", string(cmd[:]))
-    f.Println("\tYou need to start a process with the default directory empty.\n")
+    f.Printf("\n\tA 'mySuperBot' folder was detected in user's system.")
+    f.Println("\n\tElements in default directory:\n")
+    for _, index := range directoryContent {
+      f.Print("\t- " + index + "\n")
+    }
+    f.Println("\n\tYou need to start a process with the default directory empty.\n")
     askDeleteOldDefaultDir(dirDefault)
   }
   initNpm(dirDefault)
@@ -123,7 +128,7 @@ func npmCheck() string {
 func createDefaultDir(arg string) {
   reader := bufio.NewReader(os.Stdin)
   f.Printf("Clibot will install you customed bot in %s\n", arg)
-  f.Println("Do you want to continue creating the bot default directory? (Yes or No)")
+  f.Println("Do you want to continue building within bot's default directory? (Yes or No)")
   f.Print("-> ")
   text, _ := reader.ReadString('\n')
   if text == "Yes\n" {
@@ -131,7 +136,7 @@ func createDefaultDir(arg string) {
     createDir(arg)
     initNpm(arg)
   } else if text == "No\n" {
-    f.Print("If you want make me create a 🤖, we need the default directory.\n")
+    f.Print("If you want make me create a 🤖, we need to use the default directory.\n")
     f.Print("Comeback when you change your mind. 🧑‍💻\n")
     os.Exit(1)
   } else {
@@ -159,6 +164,7 @@ func askDeleteOldDefaultDir(arg string) {
       }
     } else {
       f.Println("Wise decision! Never kill a bot, we are your friends.\nDo your backup and comeback.\nSee you soon!")
+      os.Exit(102)
     }
   } else if text == "No\n" {
     f.Println("You've chosen to keep your old default directory. Installation interrupted.")
@@ -212,7 +218,7 @@ func initNpm(arg string) {
     f.Println("Could not delete installnpm.sh. Please delete it manually", err)
   }
 
-  f.Println("Select the features do you want for your bot..")
+  f.Println("Select the features do you want for your bot ...")
   var customBotInfo customOptions
   askFullOptions(customBotInfo)
 }
@@ -225,6 +231,7 @@ func askFullOptions(arg customOptions) {
   if text == "Yes\n" {
     arg.token = true
     arg.db = true
+    arg.mailing = true
     createPackageJSON(arg)
   } else if text == "No\n" {
     askToken(arg)
@@ -241,17 +248,34 @@ func askToken(arg customOptions) {
   text, _ := reader.ReadString('\n')
   if text == "Yes\n" {
     arg.token = true
+    askDb()
   } else if text == "No\n" {
     arg.token = false
+    askDb()
   } else {
     f.Println("\n\t🚸 (Answer must be 'Yes' or 'No')\n")
     askToken(arg)
   }
 }
 
+func askDb(){
+  f.Println("TODO: Ask for a db")
+}
+
 func createPackageJSON(arg customOptions) {
+  var textOfBashScript = "#!/bin/bash\nFEATURES=$1\ncd $FEATURES\nnpm i telegraf "
+  if arg.token == true {
+    textOfBashScript = textOfBashScript + "web3" + " "
+  }
+  if arg.db == true {
+    textOfBashScript = textOfBashScript + "mysql2" + " "
+  }
+  if arg.mailing == true {
+    textOfBashScript = textOfBashScript + "sendgrid" + " "
+  }
   // TODO: Create package.JSON
-  f.Printf("Creating package.json with %s", arg)
+  f.Printf("Creating package.json:\n with %s \n", textOfBashScript)
+  os.Exit(105)
 }
 
 func errLogInstall(arg error) {
