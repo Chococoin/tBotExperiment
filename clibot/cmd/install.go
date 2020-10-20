@@ -181,7 +181,6 @@ func askDeleteOldDefaultDir(arg string) {
 func createDir(path string) {
   // Creation bot directories in default position. 
   err := os.Mkdir(path, 0775)
-
   if err != nil {
     errLogInstall(err)
   } else {
@@ -189,7 +188,7 @@ func createDir(path string) {
   }
 }
 
-func initNpm(arg string) {
+func initNpm(dir string) {
   var textOfBashScript = "#!/bin/bash\nDIRECTORY=$1\ncd $DIRECTORY\npwd\nnpm init -y"
 
   file, err := os.Create("installnpm.sh")
@@ -210,7 +209,7 @@ func initNpm(arg string) {
     os.Exit(2)
   }
 
-  _, err = exec.Command("sh", "installnpm.sh", arg).Output()
+  _, err = exec.Command("sh", "installnpm.sh", dir).Output()
   if err != nil {
     f.Println("Could not initalize npm", err)
     os.Exit(2)
@@ -223,10 +222,10 @@ func initNpm(arg string) {
 
   f.Println("Select the features do you want for your bot ...")
   var customBotInfo customOptions
-  askFullOptions(customBotInfo)
+  askFullOptions(customBotInfo, dir)
 }
 
-func askFullOptions(arg customOptions) {
+func askFullOptions(arg customOptions, dir string) {
   f.Println("Do you want your bot to use all features? (Yes or No)")
   f.Print("-> ")
   reader := bufio.NewReader(os.Stdin)
@@ -235,33 +234,33 @@ func askFullOptions(arg customOptions) {
     arg.token = true
     arg.db = true
     arg.mailing = true
-    createNpmInstallCommand(arg)
+    createNpmInstallCommand(arg, dir)
   } else if text == "No\n" {
-    askToken(arg)
+    askToken(arg, dir)
   } else {
     answerAgainAndWell()
-    askFullOptions(arg)
+    askFullOptions(arg, dir)
   }
 }
 
-func askToken(arg customOptions) {
+func askToken(arg customOptions, dir string) {
   f.Println("Do you want your bot to uses an ERC-20 Token?")
   f.Print("-> ")
   reader := bufio.NewReader(os.Stdin)
   text, _ := reader.ReadString('\n')
   if text == "Yes\n" {
     arg.token = true
-    askDb(arg)
+    askDb(arg, dir)
   } else if text == "No\n" {
     arg.token = false
-    askDb(arg)
+    askDb(arg, dir)
   } else {
     answerAgainAndWell()
-    askToken(arg)
+    askToken(arg, dir)
   }
 }
 
-func askDb(arg customOptions) {
+func askDb(arg customOptions, dir string) {
   f.Println("Do you want your bot to uses a database to remember users by name?")
   f.Print("-> ")
   reader := bufio.NewReader(os.Stdin)
@@ -272,12 +271,12 @@ func askDb(arg customOptions) {
     arg.db = false
   } else {
     answerAgainAndWell()
-    askDb(arg)
+    askDb(arg, dir)
   }
-  mailing(arg)
+  mailing(arg, dir)
 }
 
-func mailing(arg customOptions) {
+func mailing(arg customOptions, dir string) {
   f.Println("Do you want your bot to send email to users?")
   f.Print("-> ")
   reader := bufio.NewReader(os.Stdin)
@@ -288,12 +287,12 @@ func mailing(arg customOptions) {
     arg.mailing = false
   } else {
     answerAgainAndWell()
-    mailing(arg)
+    mailing(arg, dir)
   }
-  ecommerce(arg)
+  ecommerce(arg, dir)
 }
 
-func ecommerce(arg customOptions) {
+func ecommerce(arg customOptions, dir string) {
   f.Println("Do you want your bot to sell products to your users?")
   f.Print("-> ")
   reader := bufio.NewReader(os.Stdin)
@@ -304,13 +303,13 @@ func ecommerce(arg customOptions) {
     arg.ecommerce = false
   } else {
     answerAgainAndWell()
-    ecommerce(arg)
+    ecommerce(arg, dir)
   }
-  createNpmInstallCommand(arg)
+  createNpmInstallCommand(arg, dir)
 }
 
-func createNpmInstallCommand(arg customOptions) {
-  var textOfBashScript = "#!/bin/bash\nFEATURES=$1\ncd $FEATURES\nnpm i telegraf "
+func createNpmInstallCommand(arg customOptions, dir string) {
+  var textOfBashScript = "#!/bin/bash\nDIRECTORY=$1\ncd $DIRECTORY\nnpm i telegraf "
   if arg.token == true {
     f.Println("Looking for Truffle framework in system")
     cmd, err := exec.Command("truffle", "version").Output()
@@ -346,13 +345,35 @@ func createNpmInstallCommand(arg customOptions) {
   if arg.mailing == true {
     textOfBashScript = textOfBashScript + "@sendgrid/client "
   }
-  installDependencies(textOfBashScript)
+  installDependencies(textOfBashScript, dir)
 }
 
-func installDependencies(arg string) {
-  // TODO: Create package.JSON
-  f.Printf("Creating package.json:\n with %s \n", arg)
-  os.Exit(105)
+func installDependencies(cLine string, dir string) {
+  f.Println(cLine)
+  f.Println("Installing dependencies...\n")
+  file, err := os.Create("installDep.sh")
+  if err != nil {
+    f.Println("Cannot create file", err)
+    os.Exit(2)
+  }
+  _, err = file.WriteString(cLine)
+  if err != nil {
+    f.Println(err)
+    file.Close()
+    os.Exit(2)
+  }
+
+  _, err = exec.Command("sh", "installDep.sh", dir).Output()
+  if err != nil {
+    f.Println("Could not install npm dependencies", err)
+    os.Exit(2)
+  }
+
+  err = os.Remove("installDep.sh")
+  if err != nil {
+    f.Println("Could not delete installDep.sh. Please delete it manually", err)
+  }
+
 }
 
 func noDeleteBot() {
