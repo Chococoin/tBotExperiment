@@ -23,7 +23,7 @@ var installCmd = &cobra.Command{
   Use:   "install",
   Short: "Install a new bot",
   Long: `
-  Install will create at $HOME/myBot a custom new
+  Install will create at $HOME/mySupervarasdasdBot a custom new
   telegram bot.
   `,
   Run: func (cmd *cobra.Command, args []string) {
@@ -189,7 +189,7 @@ func createDir(path string) {
 }
 
 func initNpm(dir string) {
-  var textOfBashScript = "#!/bin/bash\nDIRECTORY=$1\ncd $DIRECTORY\npwd\nnpm init -y"
+  var textOfBashScript = "#!/bin/bash\nDIRECTORY=$1\ncd $DIRECTORY\nnpm init -y"
 
   file, err := os.Create("installnpm.sh")
   if err != nil {
@@ -345,10 +345,10 @@ func createNpmInstallCommand(arg customOptions, dir string) {
   if arg.mailing == true {
     textOfBashScript = textOfBashScript + "@sendgrid/client "
   }
-  installDependencies(textOfBashScript, dir)
+  installDependencies(arg, textOfBashScript, dir)
 }
 
-func installDependencies(cLine string, dir string) {
+func installDependencies(arg customOptions, cLine string, dir string) {
   f.Println("Installing dependencies...\n")
   file, err := os.Create("installDep.sh")
   if err != nil {
@@ -375,6 +375,37 @@ func installDependencies(cLine string, dir string) {
     }
   }
 
+  createBot(arg, dir)
+}
+
+func createBot(arg customOptions, dir string) {
+  c := exec.Command("clear")
+  c.Stdout = os.Stdout
+  c.Run()
+  var createBot = "#!/bin/bash\nDIRECTORY=$1\ncd $DIRECTORY\ntouch superBot.js"
+
+  file, err := os.Create("createBot.sh")
+  if err != nil {
+    f.Println("Cannot create file", err)
+    os.Exit(2)
+  } else {
+    _, err = file.WriteString(createBot)
+    if err != nil {
+      f.Println(err)
+      file.Close()
+      os.Exit(2)
+    } else {
+      _, err = exec.Command("sh", "createBot.sh", dir).Output()
+      if err != nil {
+        f.Println("Could not create superBot.js", err)
+        os.Exit(2)
+      } else {
+        f.Println("A new Superbot is born! 🤖🍼")
+      }
+    }
+  }
+  // TODO: Populate with logic superBot.js
+  // _, err = file.WriteString("'use strict'\n")
 }
 
 func noDeleteBot() {
