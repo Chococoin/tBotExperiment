@@ -349,13 +349,13 @@ func createNpmInstallCommand(arg customOptions, dir string) {
 }
 
 func installDependencies(cLine string, dir string) {
-  f.Println(cLine)
   f.Println("Installing dependencies...\n")
   file, err := os.Create("installDep.sh")
   if err != nil {
     f.Println("Cannot create file", err)
     os.Exit(2)
   }
+
   _, err = file.WriteString(cLine)
   if err != nil {
     f.Println(err)
@@ -367,11 +367,12 @@ func installDependencies(cLine string, dir string) {
   if err != nil {
     f.Println("Could not install npm dependencies", err)
     os.Exit(2)
-  }
-
-  err = os.Remove("installDep.sh")
-  if err != nil {
+  } else {
+    err = os.Remove("installDep.sh")
+    if err != nil {
     f.Println("Could not delete installDep.sh. Please delete it manually", err)
+    os.Exit(2)
+    }
   }
 
 }
