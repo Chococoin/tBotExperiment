@@ -157,12 +157,13 @@ func askDeleteOldDefaultDir(arg string) {
     f.Print("-> ")
     text, _ = reader.ReadString('\n')
     if text == "Yes\n" {
+      f.Println("\nOld good bot deleted 😢. But today a new 🤖 will born 🥳")
       err := os.RemoveAll(arg)
-      f.Println("Old good bot deleted 😢. But today a new 🤖 will born 🥳")
       if err != nil {
         f.Print("Error: Something wrong deleting %s try to do it manually", arg)
         os.Exit(101)
       }
+      createDir(arg)
     } else if text == "No\n" {
         noDeleteBot()
     } else {
@@ -234,7 +235,7 @@ func askFullOptions(arg customOptions) {
     arg.token = true
     arg.db = true
     arg.mailing = true
-    createPackageJSON(arg)
+    createNpmInstallCommand(arg)
   } else if text == "No\n" {
     askToken(arg)
   } else {
@@ -260,7 +261,7 @@ func askToken(arg customOptions) {
   }
 }
 
-func askDb(arg customOptions){
+func askDb(arg customOptions) {
   f.Println("Do you want your bot to uses a database to remember users by name?")
   f.Print("-> ")
   reader := bufio.NewReader(os.Stdin)
@@ -268,32 +269,75 @@ func askDb(arg customOptions){
   if text == "Yes\n" {
     arg.db = true
   } else if text == "No\n" {
-    arg.token = false
+    arg.db = false
   } else {
     answerAgainAndWell()
     askDb(arg)
   }
+  mailing(arg)
 }
 
-func createPackageJSON(arg customOptions) {
+func mailing(arg customOptions) {
+  f.Println("Do you want your bot to send email to users?")
+  f.Print("-> ")
+  reader := bufio.NewReader(os.Stdin)
+  text, _ := reader.ReadString('\n')
+  if text == "Yes\n" {
+    arg.mailing = true
+  } else if text == "No\n" {
+    arg.mailing = false
+  } else {
+    answerAgainAndWell()
+    mailing(arg)
+  }
+  ecommerce(arg)
+}
+
+func ecommerce(arg customOptions) {
+  f.Println("Do you want your bot to sell products to your users?")
+  f.Print("-> ")
+  reader := bufio.NewReader(os.Stdin)
+  text, _ := reader.ReadString('\n')
+  if text == "Yes\n" {
+    arg.ecommerce = true
+  } else if text == "No\n" {
+    arg.ecommerce = false
+  } else {
+    answerAgainAndWell()
+    ecommerce(arg)
+  }
+  createNpmInstallCommand(arg)
+}
+
+func createNpmInstallCommand(arg customOptions) {
   var textOfBashScript = "#!/bin/bash\nFEATURES=$1\ncd $FEATURES\nnpm i telegraf "
   if arg.token == true {
     f.Println("Looking for Truffle framework in system")
-    cmd, err := exec.Command("Truffle", "-v").Output()
+    cmd, err := exec.Command("truffle", "version").Output()
     if err != nil {
-      f.Println("Error with exec.Command")
+      f.Printf("Error with exec.Command %s: \n", err)
       os.Exit(112)
     } else {
-      f.Println(cmd)
-    }
-    f.Println("Installing Truffle Framework")
-    _, err = exec.Command("npm", "i", "-g", "truffle").Output()
-    if err != nil {
-      f.Print("Unable to install Truffle globally.")
-      os.Exit(100)
+      var output = strings.Split(strings.Trim(string(cmd[:]), "\n"), "\n")
+      var zeroIndex = strings.Split(output[0], " ")
+      var lowerZeroIdx = strings.ToLower(zeroIndex[0])
+      if lowerZeroIdx == "truffle" {
+        f.Println("\n\t✅ truffle Version:\n")
+        for _, index := range output {
+          f.Print("\t\t- " + index + "\n")
+        }
+        f.Print("\n")
       } else {
-        
+        f.Println("Installing Truffle Framework")
+        _, err = exec.Command("npm", "i", "-g", "truffle").Output()
+        if err != nil {
+          f.Print("Unable to install Truffle globally.")
+          os.Exit(100)
+        } else {
+          f.Println("\t✅ Truffle successfully installed.")
+        }
       }
+    }
     textOfBashScript = textOfBashScript + "web3 " + "@truffle/hdwallet-provider "
   }
   if arg.db == true {
@@ -302,11 +346,12 @@ func createPackageJSON(arg customOptions) {
   if arg.mailing == true {
     textOfBashScript = textOfBashScript + "@sendgrid/client "
   }
-  if arg.ecommerce == true {
+  installDependencies(textOfBashScript)
+}
 
-  }
+func installDependencies(arg string) {
   // TODO: Create package.JSON
-  f.Printf("Creating package.json:\n with %s \n", textOfBashScript)
+  f.Printf("Creating package.json:\n with %s \n", arg)
   os.Exit(105)
 }
 
