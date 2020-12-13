@@ -15,6 +15,7 @@
   "dependencies": {
     "@sendgrid/mail": "^7.2.4",
     "@truffle/hdwallet-provider": "^1.0.42",
+    "@what3words/api": "^3.1.1",
     "axios": "^0.19.2",
     "ethereumjs-units": "^0.2.0",
     "mysql2": "^2.1.0",

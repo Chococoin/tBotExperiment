@@ -27,7 +27,21 @@ var installCmd = &cobra.Command{
   telegram bot.
   `,
   Run: func (cmd *cobra.Command, args []string) {
-    f.Println("🕵️ Checking system requirements:\n")
+    clear()
+    f.Println(`
+           /$$ /$$ /$$                   /$$    
+          | $$|__/| $$                  | $$    
+ /$$$$$$$ | $$ /$$| $$$$$$$   /$$$$$$  /$$$$$$  
+/ $$_____/| $$| $$| $$__  $$ /$$__  $$|_  $$_/   
+| $$      | $$| $$| $$  \ $$| $$  \ $$  | $$    
+| $$      | $$| $$| $$  | $$| $$  | $$  | $$ /$$
+|  $$$$$$$| $$| $$| $$$$$$$/|  $$$$$$/  |  $$$$/
+\_______/ |__/|__/|_______/  \______/    \____/  
+
+======================================================
+A command-line interface to control your telegram bot.
+======================================================`)
+    f.Println("\n\t🕵️ Checking system requirements:\n")
     sysDiagnosticInstall()
   },
 }
@@ -153,10 +167,12 @@ func askDeleteOldDefaultDir(arg string) {
   text, _ := reader.ReadString('\n')
   if text == "Yes\n" {
     // TODO f.Println("Because we ♥️ every 🤖, your old bot will be moved to a new directory.")
+    clear()
     f.Println("Your old good bot will be deleted. Are you sure?")
     f.Print("-> ")
     text, _ = reader.ReadString('\n')
     if text == "Yes\n" {
+      clear()
       f.Println("\nOld good bot deleted 😢. But today a new 🤖 will born 🥳")
       err := os.RemoveAll(arg)
       if err != nil {
@@ -173,6 +189,7 @@ func askDeleteOldDefaultDir(arg string) {
   } else if text == "No\n" {
       noDeleteBot()
   } else {
+    clear()
     answerAgainAndWell()
     askDeleteOldDefaultDir(arg)
   }
@@ -189,7 +206,7 @@ func createDir(path string) {
 }
 
 func initNpm(dir string) {
-  var textOfBashScript = "#!/bin/bash\nDIRECTORY=$1\ncd $DIRECTORY\nnpm init -y"
+  var textOfBashScript string = "#!/bin/bash\nDIRECTORY=$1\ncd $DIRECTORY\nnpm init -y"
 
   file, err := os.Create("installnpm.sh")
   if err != nil {
@@ -234,7 +251,7 @@ func askFullOptions(arg customOptions, dir string) {
     arg.token = true
     arg.db = true
     arg.mailing = true
-    createNpmInstallCommand(arg, dir)
+    createBot(arg, dir)
   } else if text == "No\n" {
     askToken(arg, dir)
   } else {
@@ -305,11 +322,12 @@ func ecommerce(arg customOptions, dir string) {
     answerAgainAndWell()
     ecommerce(arg, dir)
   }
-  createNpmInstallCommand(arg, dir)
+  createBot(arg, dir)
 }
 
 func createNpmInstallCommand(arg customOptions, dir string) {
   var textOfBashScript = "#!/bin/bash\nDIRECTORY=$1\ncd $DIRECTORY\nnpm i telegraf "
+  clear()
   if arg.token == true {
     f.Println("Looking for Truffle framework in system")
     cmd, err := exec.Command("truffle", "version").Output()
@@ -345,7 +363,6 @@ func createNpmInstallCommand(arg customOptions, dir string) {
   if arg.mailing == true {
     textOfBashScript = textOfBashScript + "@sendgrid/client "
   }
-  installDependencies(arg, textOfBashScript, dir)
 }
 
 func installDependencies(arg customOptions, cLine string, dir string) {
@@ -374,47 +391,66 @@ func installDependencies(arg customOptions, cLine string, dir string) {
     os.Exit(2)
     }
   }
-
-  createBot(arg, dir)
 }
 
 func createBot(arg customOptions, dir string) {
-  c := exec.Command("clear")
-  c.Stdout = os.Stdout
-  c.Run()
-  var createBot = "#!/bin/bash\nDIRECTORY=$1\ncd $DIRECTORY\ntouch superBot.js"
+  clear()
+  var createFileBot string = "#!/bin/bash\nDIRECTORY=$1\ncd $DIRECTORY\ncat <<EOF > superBot.js\n"
 
-  file, err := os.Create("createBot.sh")
+  var botContent string = "'use strict'\n\nconst Telegraf = require('telegraf')\nconst { Markup } = Telegraf\nconst fs = require('fs')\n"
+  if arg.token {
+    botContent = botContent + "const Web3 = require('web3')\nconst HDWalletProvider = require('@truffle/hdwallet-provider')\n"
+  }
+  if arg.db {
+    botContent = botContent + "const mySql = require('mysql2')\n"
+  }
+  if arg.mailing {
+    botContent = botContent + "const Mail = require('@sendgrid/mail')\n"
+  }
+
+  botContent = botContent + "\nconst telegramApiKey = fs.readFileSync('.telegramApiKey').toString().trim()\n"
+
+  if arg.ecommerce {
+    botContent = botContent + "const PAYMENT_TOKEN = fs.readFileSync('.stripeApiKey').toString().trim()\n"
+  }
+  if arg.token {
+    botContent = botContent + "const mnemonic = fs.readFileSync('.secret').toString().trim()\nconst infuraApi = fs.readFileSync('.infuraApiKey').toString().trim()\n"
+  }
+
+  createFileBot = createFileBot + botContent + "EOF"
+
+  file, err := os.Create("createFileBot.sh")
   if err != nil {
     f.Println("Cannot create file", err)
     os.Exit(2)
   } else {
-    _, err = file.WriteString(createBot)
+    _, err = file.WriteString(createFileBot)
     if err != nil {
       f.Println(err)
       file.Close()
       os.Exit(2)
     } else {
-      _, err = exec.Command("sh", "createBot.sh", dir).Output()
-      if err != nil {
+      _, err = exec.Command("sh", "createFileBot.sh", dir).Output()
+      if err == nil {
+        f.Println("A new Superbot is born! 🤖🍼")
+        os.Remove("createFileBot.sh")
+      } else {
         f.Println("Could not create superBot.js", err)
         os.Exit(2)
-      } else {
-        f.Println("A new Superbot is born! 🤖🍼")
       }
     }
   }
-  // TODO: Populate with logic superBot.js
-  // _, err = file.WriteString("'use strict'\n")
 }
 
 func noDeleteBot() {
+  clear()
   f.Println("Wise decision! Never kill a bot, we are your friends.\nDo your backup and comeback.\nSee you soon!\n")
-  f.Println("You've chosen to keep your old default directory. Installation interrupted.")
+  f.Println("You've chosen to keep your old default directory.\nInstallation interrupted.")
   os.Exit(1)
 }
 
 func answerAgainAndWell() {
+  clear()
   f.Println("\n\t🚸 (Answer must be 'Yes' or 'No')\n")
 }
 
@@ -423,3 +459,9 @@ func errLogInstall(arg error) {
     f.Printf("❌ Error: %s\n", arg)
   }
 } 
+
+func clear() {
+  c := exec.Command("clear")
+  c.Stdout = os.Stdout
+  c.Run()
+}

@@ -6,3 +6,4 @@ node_modules
 .what3wordsApiKey
 .infuraApiKey
 .krakenApiKey
+.krakenPkAPI

@@ -12,7 +12,7 @@ const { Markup } = Telegraf
 
 const telegramApiKey = fs.readFileSync(".telegramApiKey").toString().trim()
 const PAYMENT_TOKEN = fs.readFileSync(".stripeApiKey").toString().trim()
-const what3WordsApiKey = fs.readFileSync(".what3wordsApiKey").toString().trim()
+// const what3WordsApiKey = fs.readFileSync(".what3wordsApiKey").toString().trim()
 const mnemonic = fs.readFileSync(".secret").toString().trim()
 const infuraApi = fs.readFileSync(".infuraApiKey").toString().trim()
 
@@ -20,7 +20,7 @@ const abi = require('./build/contracts/EuroBacked.json').abi
 const jsonInterfase = require('./build/contracts/EuroBacked.json')
 const contractAddress = require('./build/contracts/EuroBacked.json').networks[3].address
 
-const provider = new HDWalletProvider(mnemonic, `https://ropsten.infura.io/v3/${infuraApi}`)
+const provider = new HDWalletProvider(mnemonic, `https://goerli.infura.io/v3/${infuraApi}`)
 const sender = provider.addresses[0]
 const web3 = new Web3(provider)
 
@@ -29,10 +29,10 @@ const contract = new web3.eth.Contract(abi, contractAddress, { gasPrice: '550000
 
 const db = mySql.createPool({
     host: "localhost",
-    user: "mysqlportaluser",
-    database: "quadrans_db",
+    user: "",
+    database: "",
     // TODO use env values
-    password: "23f37c8d881fde56b0692ee0190ea9ae"
+    password: ""
 })
 
 // async function define name Token
