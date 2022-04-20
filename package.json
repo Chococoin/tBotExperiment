@@ -24,6 +24,7 @@
     "mysql2": "^2.1.0",
     "sequelize": "^6.3.5",
     "telegraf": "^3.38.0",
+    "truffle-plugin-verify": "^0.5.25",
     "update": "^0.7.4",
     "upgrade": "^1.1.0",
     "web3": "^1.2.11"
