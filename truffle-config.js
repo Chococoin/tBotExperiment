@@ -72,6 +72,7 @@ module.exports = {
     polygon: {
       provider: () => new HDWalletProvider( mnemonic, `https://polygon-mainnet.infura.io/v3/${infuraApiKey}`),
       network_id: 137,
+      gasPrice: 40000000000,
       confirmations: 2,
       skipDryRun: true,
     },
