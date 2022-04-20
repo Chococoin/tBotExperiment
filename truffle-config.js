@@ -64,7 +64,7 @@ module.exports = {
       skipDryRun: true
     },
     mumbai: {
-      provider: () => new HDWalletProvider( mnemonic, `https://polygon-mumbai.infura.io/v3/${infuraApiKey}`),
+      provider: () => new HDWalletProvider( mnemonic, `https://polygon-mumbai.infura.io/v3/${infuraApiKey}` ),
       network_id: 80001,
       gas: 20000000,
       gasPrice: 40000000000,
@@ -72,15 +72,25 @@ module.exports = {
       skipDryRun: true,
     },
     polygon: {
-      provider: () => new HDWalletProvider( mnemonic, `https://polygon-mainnet.infura.io/v3/${infuraApiKey}`),
+      provider: () => new HDWalletProvider( mnemonic, `https://polygon-mainnet.infura.io/v3/${infuraApiKey}` ),
       network_id: 137,
       gasPrice: 40000000000,
       confirmations: 2,
       skipDryRun: true,
     },
     avalanche_fuji: {
-      provider: () => new HDWalletProvider( mnemonic, `https://speedy-nodes-nyc.moralis.io/${moralisApiKey}/avalanche/testnet`),
+      provider: () => new HDWalletProvider( mnemonic, `https://speedy-nodes-nyc.moralis.io/${moralisApiKey}/avalanche/testnet` ),
       network_id: 43113,
+      gas: 3000000,
+      gasPrice: 225000000000,
+      confirmations: 2,
+      skipDryRun: true,
+    },
+    mombai: {
+      provider: () => new HDWalletProvider( mnemonic, `https://speedy-nodes-nyc.moralis.io/${moralisApiKey}/polygon/mumbai` ),
+      network_id: 80001,
+      gas: 20000000,
+      gasPrice: 40000000000,
       confirmations: 2,
       skipDryRun: true,
     },
