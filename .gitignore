@@ -9,4 +9,5 @@ build/contracts
 .krakenApiKey
 .krakenPkAPI
 .moralisApiKey
+.snowtraceApiKey
 .env
