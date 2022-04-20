@@ -24,7 +24,7 @@ const HDWalletProvider = require('@truffle/hdwallet-provider');
 
 const mnemonic = fs.readFileSync(".secret").toString().trim();
 const infuraApiKey = fs.readFileSync(".infuraApiKey").toString().trim();
-const moralisApiKey = fs.readFileSync(".infuraApiKey").toString().trim();
+const moralisApiKey = fs.readFileSync(".moralisApiKey").toString().trim();
 
 module.exports = {
   /**
@@ -66,6 +66,8 @@ module.exports = {
     mumbai: {
       provider: () => new HDWalletProvider( mnemonic, `https://polygon-mumbai.infura.io/v3/${infuraApiKey}`),
       network_id: 80001,
+      gas: 20000000,
+      gasPrice: 40000000000,
       confirmations: 2,
       skipDryRun: true,
     },
