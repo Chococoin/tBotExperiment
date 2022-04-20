@@ -18,13 +18,14 @@
  *
  */
 
-require("dotenv").config()
+require("dotenv").config();
 const fs = require('fs');
 const HDWalletProvider = require('@truffle/hdwallet-provider');
 
 const mnemonic = fs.readFileSync(".secret").toString().trim();
 const infuraApiKey = fs.readFileSync(".infuraApiKey").toString().trim();
 const moralisApiKey = fs.readFileSync(".moralisApiKey").toString().trim();
+const snowtraceApiKey = fs.readFileSync(".snowtraceApiKey").toString().trim();
 
 module.exports = {
   /**
@@ -37,6 +38,9 @@ module.exports = {
    * $ truffle test --network <network-name>
    */
   plugins: ["truffle-plugin-verify"],
+  api_keys: {
+    snowtrace: snowtraceApiKey
+  },
   networks: {
     development: {
       host: "127.0.0.1",     // Localhost (default: none)
@@ -93,6 +97,12 @@ module.exports = {
       gasPrice: 40000000000,
       confirmations: 2,
       skipDryRun: true,
+    },
+    snow_fuji: {
+      provider: () => new HDWalletProvider( mnemonic, `https://api.avax-test.network/ext/bc/C/rpc` ),
+      network_id: 43113,
+      timeoutBlocks: 200,
+      confirmations: 2
     },
     // Useful for private networks
     // private: {
