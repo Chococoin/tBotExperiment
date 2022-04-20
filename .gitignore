@@ -1,5 +1,6 @@
 package-lock.json
 node_modules
+build/contracts
 .secret
 .stripeApiKey
 .telegramApiKey
@@ -7,3 +8,5 @@ node_modules
 .infuraApiKey
 .krakenApiKey
 .krakenPkAPI
+.moralisApiKey
+.env
