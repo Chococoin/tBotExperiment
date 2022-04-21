@@ -44,7 +44,7 @@ contract EuroBacked {
 
   function approve(address delegate, uint numTokens) public returns (bool) {
     allowed[msg.sender][delegate] = numTokens;
-    Approval(msg.sender, delegate, numTokens);
+    emit Approval(msg.sender, delegate, numTokens);
     return true;
   }
 
@@ -59,7 +59,7 @@ contract EuroBacked {
     balances[owner] = balances[owner].sub(numTokens);
     allowed[owner][msg.sender] = allowed[owner][msg.sender].sub(numTokens);
     balances[buyer] = balances[buyer].add(numTokens);
-    Transfer(owner, buyer, numTokens);
+    emit Transfer(owner, buyer, numTokens);
     return true;
   }
 }
