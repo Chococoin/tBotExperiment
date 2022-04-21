@@ -4,39 +4,51 @@ const Telegraf = require('telegraf')
 const axios = require('axios')
 const fs = require('fs')
 const Web3 = require('web3')
-const mySql = require('mysql2')
+// const mySql = require('mysql2')
 const Units = require('ethereumjs-units')
 const Mail = require('@sendgrid/mail')
 const HDWalletProvider = require('@truffle/hdwallet-provider')
 const { Markup } = Telegraf
 
 const telegramApiKey = fs.readFileSync(".telegramApiKey").toString().trim()
-const PAYMENT_TOKEN = fs.readFileSync(".stripeApiKey").toString().trim()
+// const PAYMENT_TOKEN = fs.readFileSync(".stripeApiKey").toString().trim() 
 // const what3WordsApiKey = fs.readFileSync(".what3wordsApiKey").toString().trim()
 const mnemonic = fs.readFileSync(".secret").toString().trim()
 const infuraApi = fs.readFileSync(".infuraApiKey").toString().trim()
 
-const abi = require('./build/contracts/EuroBacked.json').abi
-const jsonInterfase = require('./build/contracts/EuroBacked.json')
-const contractAddress = require('./build/contracts/EuroBacked.json').networks[3].address
+const jsonInterface = require('./build/contracts/EuroBacked.json')
+const abi = jsonInterface.abi
+const contractAddress = require('./build/contracts/EuroBacked.json').networks[5].address
 
 const provider = new HDWalletProvider(mnemonic, `https://goerli.infura.io/v3/${infuraApi}`)
 const sender = provider.addresses[0]
 const web3 = new Web3(provider)
 
 
-const contract = new web3.eth.Contract(abi, contractAddress, { gasPrice: '55000000000', from: sender })
+const contract = new web3.eth.Contract(jsonInterface.abi, contractAddress, { gasPrice: '4000000000', from: sender })
 
-const db = mySql.createPool({
-    host: "localhost",
-    user: "",
-    database: "",
-    // TODO use env values
-    password: ""
-})
+// const db = mySql.createPool({
+//     host: "localhost",
+//     user: "",
+//     database: "",
+//     // TODO use env values
+//     password: ""
+// })
 
 // async function define name Token
-let tokenName = contract.methods.name().call().then(console.log)
+let tokenName = contract.methods.name().call().then(console.log).catch(console.log)
+
+async function supply(){
+    try{
+        let a = await contract.methods.totalSupply().call()
+        console.log(a)
+        return a
+    } catch(err) {
+        console.log(err)
+    }
+}
+
+supply()
 
 const app = new Telegraf(telegramApiKey)
 
