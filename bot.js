@@ -1,42 +1,43 @@
 'use strict'
 
-const Telegraf = require('telegraf')
-const axios = require('axios')
+require('dotenv').config()
+const { Telegraf, Markup } = require('telegraf')
+// const axios = require('axios')
 const fs = require('fs')
 const Web3 = require('web3')
-const mySql = require('mysql2')
 const Units = require('ethereumjs-units')
 const Mail = require('@sendgrid/mail')
 const HDWalletProvider = require('@truffle/hdwallet-provider')
-const { Markup } = Telegraf
+
+const mongoose = require('mongoose')
+const User = require('./Schemas/User.js')
+
+db()
+  .then( res => console.log(res) )
+  .catch( err => console.log(`Mongo database not connected ${err}`) )
+
+async function db() {
+    await mongoose.connect(process.env.MONGODB_URL || 'mondodb://127.0.0.1:27017/tBot')
+}
 
 const telegramApiKey = fs.readFileSync(".telegramApiKey").toString().trim()
-const PAYMENT_TOKEN = fs.readFileSync(".stripeApiKey").toString().trim()
-// const what3WordsApiKey = fs.readFileSync(".what3wordsApiKey").toString().trim()
+// const PAYMENT_TOKEN = fs.readFileSync(".stripeApiKey").toString().trim() /* This version won't use stripe */
+// const what3WordsApiKey = fs.readFileSync(".what3wordsApiKey").toString().trim() // TODO: Use it to tokenize trees.
 const mnemonic = fs.readFileSync(".secret").toString().trim()
 const infuraApi = fs.readFileSync(".infuraApiKey").toString().trim()
 
-const abi = require('./build/contracts/EuroBacked.json').abi
-const jsonInterfase = require('./build/contracts/EuroBacked.json')
-const contractAddress = require('./build/contracts/EuroBacked.json').networks[3].address
+const abi = require('./build/contracts/SuperJuicyToken.json').abi // TODO: use new contract
+const contractAddress = require('./build/contracts/SuperJuicyToken.json').networks[43113].address
 
-const provider = new HDWalletProvider(mnemonic, `https://goerli.infura.io/v3/${infuraApi}`)
+const provider = new HDWalletProvider(mnemonic, `https://goerli.infura.io/v3/${infuraApi}`) // Use Avalanche
 const sender = provider.addresses[0]
 const web3 = new Web3(provider)
 
 
 const contract = new web3.eth.Contract(abi, contractAddress, { gasPrice: '55000000000', from: sender })
 
-const db = mySql.createPool({
-    host: "localhost",
-    user: "",
-    database: "",
-    // TODO use env values
-    password: ""
-})
-
 // async function define name Token
-let tokenName = contract.methods.name().call().then(console.log)
+let tokenName = (async () => await contract.methods.readName().call())()
 
 const app = new Telegraf(telegramApiKey)
 

@@ -2,16 +2,17 @@
 pragma solidity ^0.8.7;
 import { SuperTokenBase } from "./SuperTokenBase.sol";
 import { UUPSProxy } from "./UUPSProxy.sol";
+
 contract SuperJuicyToken is SuperTokenBase, UUPSProxy {
     string internal _message;
+    string internal _name;
     uint256 internal _initialSupply;
-    function initialize(
+    function initialize (
         string calldata name,
         string calldata symbol,
         string calldata message,
         uint256 initialSupply
-    ) external {
-        _message = message;
+      ) external {
         bool success;
         (success, ) = address(this).call(
             abi.encodeWithSignature(
@@ -32,21 +33,33 @@ contract SuperJuicyToken is SuperTokenBase, UUPSProxy {
             )
         );
         require(success, "selfMint failed");
+        _message = message;
         _initialSupply = initialSupply;
+        _name = name;
     }
+
     function readMessage()
         public
         view
         returns(string memory)
-    {
+      {
         return _message;
     }
-        function readSupply()
+
+    function readSupply()
+        public
+        view
+        returns(uint256)
+      {
+        return _initialSupply;
+    }
+
+    function readName()
         public
         view
         returns(string memory)
-    {
-        return _message;
+      {
+        return _name;
     }
 }
 
