@@ -2,7 +2,8 @@
 
 require('dotenv').config()
 const { Telegraf, Markup } = require('telegraf')
-// const axios = require('axios')
+const axios = require('axios')
+// const what3words = require("@what3words/api")
 const fs = require('fs')
 const Web3 = require('web3')
 const Units = require('ethereumjs-units')
@@ -13,7 +14,7 @@ const mongoose = require('mongoose')
 const User = require('./Schemas/User.js')
 
 db()
-  .then( res => console.log(res) )
+  .then( () => console.log(`Mongo database connected`))
   .catch( err => console.log(`Mongo database not connected ${err}`) )
 
 async function db() {
@@ -22,22 +23,26 @@ async function db() {
 
 const telegramApiKey = fs.readFileSync(".telegramApiKey").toString().trim()
 // const PAYMENT_TOKEN = fs.readFileSync(".stripeApiKey").toString().trim() /* This version won't use stripe */
-// const what3WordsApiKey = fs.readFileSync(".what3wordsApiKey").toString().trim() // TODO: Use it to tokenize trees.
+
+const what3WordsApiKey = fs.readFileSync(".what3wordsApiKey").toString().trim() // TODO: Use it to tokenize trees.
+// what3words.setOptions({ key: what3WordsApiKey })
+
 const mnemonic = fs.readFileSync(".secret").toString().trim()
 const infuraApi = fs.readFileSync(".infuraApiKey").toString().trim()
 
 const abi = require('./build/contracts/SuperJuicyToken.json').abi // TODO: use new contract
-const contractAddress = require('./build/contracts/SuperJuicyToken.json').networks[43113].address
+const contractAddress = require('./build/contracts/SuperJuicyToken.json').networks[5].address
 
 const provider = new HDWalletProvider(mnemonic, `https://goerli.infura.io/v3/${infuraApi}`) // Use Avalanche
 const sender = provider.addresses[0]
 const web3 = new Web3(provider)
 
 
-const contract = new web3.eth.Contract(abi, contractAddress, { gasPrice: '55000000000', from: sender })
+const contract = new web3.eth.Contract(abi, contractAddress, { gasPrice: '2000000000', from: sender })
 
 // async function define name Token
-let tokenName = (async () => await contract.methods.readName().call())()
+let tokenName = contract.methods.readName().call().then(console.log).catch(console.log)
+let tokenSupply = contract.methods.readSupply().call().then(console.log).catch(console.log)
 
 const app = new Telegraf(telegramApiKey)
 
@@ -120,27 +125,28 @@ app.on('successful_payment', (ctx) => {
     console.log(`${ctx.from.first_name} (${ctx.from.username}) just payed ${ctx.message.successful_payment.total_amount / 100} €.`)
 })
 
-app.command('location', (ctx) => {
-    console.log(ctx.update.message)
-    // let lat = ctx.update.message.location.latitude
-    // let lon = ctx.update.message.location.longitude
-    // let lang = ctx.update.message.language_code
-    // axios.get('https://api.what3words.com/v3/convert-to-3wa', {
-    //     params: {
-    //       coordinates: `${lat},${lon}`,
-    //       language: lang,
-    //       what3WordsApiKey
-    //     }
-    // })
-    // .then(function (response) {
-    //   console.log(response)
-    // })
-    // .catch(function (error) {
-    //   console.log(error)
-    // })
-    // .finally(function () {
-    //   console.log("Finish")
-    // })
+app.on('location', (ctx) => {
+    // console.log(ctx.update.message)
+    let lat = ctx.update.message.location.latitude
+    let lon = ctx.update.message.location.longitude
+    let lang = ctx.update.message.from.language_code
+
+    axios.get('https://api.what3words.com/v3/convert-to-3wa', {
+        params: {
+          coordinates: `${lat},${lon}`,
+          language: lang,
+          key: what3WordsApiKey
+        }
+    })
+    .then((response) => {
+      console.log(response.data)
+    })
+    .catch(function (error) {
+      console.log(error)
+    })
+    .finally(function () {
+      console.log("Finish")
+    })
 })
 
 app.startPolling()
