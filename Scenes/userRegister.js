@@ -1,5 +1,7 @@
 const { Scenes, Composer } = require('telegraf')
 const User = require('../Schemas/User.js')
+const sendVerifications = require('../utils/sendVerifications.js')
+const randomCode = require('../utils/randomCode.js')
 const newUser = new User()
 let oldUserRegistered
 
@@ -19,14 +21,18 @@ step2.on('message', async (ctx) => {
   } catch(err) {
     console.log(err)
   }
-  if (!oldUserRegistered && reEmail.test(ctx.message.text) ) {
+  if ( !oldUserRegistered && reEmail.test(ctx.message.text) ) {
     newUser.email = ctx.message.text
     newUser.telegramID = ctx.update.message.from.id
-    // newUser.save()
+    newUser.emailCode = randomCode()
     ctx.reply(`I have received your email ${ctx.message.text}\nNow please write your phone number`)
     return ctx.wizard.next()
   } else {
-    ctx.reply('Sorry I can\'t accept that as an email. Try again after write something.')
+    if ( oldUserRegistered ) {
+      ctx.reply(`You are already registered.\nPhone verified ${oldUserRegistered.verifiedPhone}\nEmail varified: ${oldUserRegistered.verifiedEmail}`)
+    } else {
+      ctx.reply('Sorry I can\'t accept that as an email. Try again after write something.')
+    }
     return ctx.wizard.selectStep(0)
   }
 })
@@ -37,6 +43,8 @@ step3.on('message', async (ctx) => {
   if(parseInt(ctx.message.text) && rePhone.test(ctx.message.text)) {
     ctx.reply(`I have received your phone ${ctx.message.text}\nAfter receive verification codes by SMS and email you have to enter it clicking /verification.`)
     newUser.phone = ctx.message.text
+    newUser.phoneCode = randomCode()
+    sendVerifications(newUser.email, newUser.phone, newUser.phoneCode, newUser.emailCode)
     newUser.save()
     return ctx.scene.leave()
   } else {
