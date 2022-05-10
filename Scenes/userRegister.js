@@ -8,7 +8,7 @@ let oldUserRegistered
 const reEmail = /(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:(2(5[0-5]|[0-4][0-9])|1[0-9][0-9]|[1-9]?[0-9]))\.){3}(?:(2(5[0-5]|[0-4][0-9])|1[0-9][0-9]|[1-9]?[0-9])|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])/
 const rePhone = /[0-9]/
 const step1 = (ctx) => {
-  ctx.reply('Let\'s create your User\nTo create a new User we need your email and phone number.\nFirst Write down your email')
+  ctx.reply('Let\'s create your User\nTo create a new User we need your email and phone number.\nFirst write down your email')
   return ctx.wizard.next()
 }
 
@@ -17,7 +17,7 @@ const step2 = new Composer()
 step2.on('message', async (ctx) => {
 
   try {
-    oldUserRegistered = await User.findOne({ telegramID: 913167327 })
+    oldUserRegistered = await User.findOne({ telegramID: ctx.update.message.from.id })
   } catch(err) {
     console.log(err)
   }
@@ -38,6 +38,11 @@ step2.on('message', async (ctx) => {
   }
 })
 
+step2.command('cancel', (ctx) => {
+  ctx.reply('Bye bye Phone')
+  return ctx.scene.leave()
+})
+
 const step3 = new Composer()
 
 step3.on('message', async (ctx) => {
@@ -45,6 +50,7 @@ step3.on('message', async (ctx) => {
     ctx.reply(`I have received your phone ${ctx.message.text}\nAfter receive verification codes by SMS and email you have to enter it clicking /verification.`)
     newUser.phone = ctx.message.text
     newUser.phoneCode = randomCode()
+    newUser.sinceMessageID = ctx.update.message.from.id
     sendVerifications(newUser.email, newUser.phone, newUser.phoneCode, newUser.emailCode)
     newUser.save()
     return ctx.scene.leave()
