@@ -13,10 +13,14 @@ const events = require('events')
 const bip39 = require('bip39')
 const eventEmitter = new events.EventEmitter()
 
+const noteUser = require('./utils/noteUser').noteUser
 const userRegister = require('./Scenes/userRegister').userRegister
+const userVerification = require('./Scenes/userVerification').userVerification
 const tokenCreation = require('./Scenes/tokenCreation').tokenCreation
 const gasBalance = require('./Scenes/gas').gasBalance
 const gasLoad = require('./Scenes/gas').gasLoad
+const dbCount = require('./utils/dbCount')
+const createLink = require('./utils/createLink')
 
 eventEmitter.on('token_creation', (...args) => console.log(...args))
 // eventEmitter.on('user_creation', (...args) => console.log("USER CREATION",...args))
@@ -55,7 +59,7 @@ let tokenName = contract.methods.readName().call().then(console.log).catch(conso
 let tokenSupply = contract.methods.readSupply().call().then(console.log).catch(console.log)
 
 const app = new Telegraf(telegramApiKey)
-const stage = new Scenes.Stage([ userRegister, tokenCreation, gasBalance, gasLoad ])
+const stage = new Scenes.Stage([ userRegister, tokenCreation, gasBalance, gasLoad, userVerification ])
 app.use(session())
 app.use(stage.middleware())
 
@@ -122,7 +126,7 @@ function createInvoice (product) {
 
 // Start command
 
-// TODO create that list of ativities to promote the repo such follow us in twitter. 
+// TODO create that list of activities to promote the repo such follow us in twitter. 
 // app.command('come_partecipare', ({ reply }) => reply('Domandarmi "Come posso aiutare?" e ti darò una lista'))
 
 // Show offer
@@ -138,7 +142,7 @@ function createInvoice (product) {
 
 app.start((ctx) => {
   let userFirstName = ctx.message.from.first_name
-  let message = ` Hello master ${userFirstName}, select action?`
+  let message = ` Hello ${userFirstName}, select an action?`
 
   let options = Markup.inlineKeyboard([
     Markup.button.callback('User register', 'user_register'),
@@ -146,27 +150,61 @@ app.start((ctx) => {
     Markup.button.callback('Gas Balance', 'gas_balance'),
     Markup.button.callback('Gas Load', 'gas_load'),
   ])
-
-  Markup.keyboard
-
   ctx.reply(message, options)
 })
 
-app.command('create_new_user', ctx => {
-  const mnemonic2 = bip39.generateMnemonic()
-  ctx.reply(`User Created! ${mnemonic2}`)
+app.command('verification', (ctx) => {
+  let message = `Look for you sms code and you email code\nthen click the button bellow`
+
+  let options = Markup.inlineKeyboard([
+    Markup.button.callback('User Verification', 'user_verification'),
+  ])
+  ctx.reply(message, options)
 })
 
-app.command('play_video', (ctx) => {
-  ctx.replyWithVideo({ source: fs.createReadStream('sample_960x400_ocean_with_audio.mp4')})
+app.command('asklink', async ctx => {
+  let fromId = ctx.message.from.id
+  let user = await User.find({ telegramID : fromId })
+  console.log("USER:", user[0])
+  // TODO: Control if the user has an old link. 
+  if (user[0]) {
+    let newLink = await createLink(ctx, 'direct')
+    console.log("NEW_LINK:", newLink)
+    if(newLink != 'broken_link') {
+      user[0].link = newLink.invite_link ? newLink.invite_link : newLink
+      user[0].save()
+      ctx.reply(`${user[0].username} has a new link ${user[0].link}`)
+    }
+  } else {
+    ctx.reply('A no registered user can\'t apply for a referrer link.')
+  }
 })
 
-app.command('help', (ctx) => {
-  ctx.reply('Just a message for help')
+// TODO: Review commands
+// app.command('create_new_user', (ctx) => {
+//   const mnemonic2 = bip39.generateMnemonic()
+//   ctx.reply(`User Created! ${mnemonic2}`)
+// })
+
+// app.command('play_video', (ctx) => {
+//   ctx.replyWithVideo({ source: fs.createReadStream('sample_960x400_ocean_with_audio.mp4')})
+// })
+
+app.command('help', async (ctx) => {
+  ctx.reply('A message for help')
+  try {
+    dbCount(ctx)
+  } catch(error) {
+    console.log(error)
+  }
 })
 
-// TODO
-/* app.command('registrationStatus') */
+// TODO: Show to user status of registration
+// app.command('status', (ctx) => {
+  
+// })
+// TODO: Add sessions
+
 
 // Order product
 products.forEach(p => {
@@ -181,7 +219,33 @@ app.on('pre_checkout_query', ({ answerPreCheckoutQuery }) => answerPreCheckoutQu
 app.on('successful_payment', (ctx) => {
   console.log(`${ctx.from.first_name} (${ctx.from.username}) just payed ${ ctx.message.successful_payment.total_amount / 100 } €.`)
 })
+app.on('new_chat_participant', (ctx) => ctx.reply(`👍 Welcome ${ctx.from.first_name} new_chat_participant`))
+app.on('chat_join_request', async (ctx) => {
+  console.log('CHAT_JOIN_REQUEST: ', ctx.update.chat_join_request)
+  let referee = ctx.update.chat_join_request.from.id
+  let referer = parseInt(ctx.update.chat_join_request.invite_link.name.split('-')[1])
+  console.log("Referer", referer)
+  console.log("Referee", referee)
+  let user = await User.find({ telegramID: referer })
+  console.log('User:', user[0])
+  if ( user[0].telegramID === referer ) {
+    console.log("To be approved...")
+    try {
+      await ctx.approveChatJoinRequest(referee)
+      ctx.reply(`Welcome ${ctx.update.chat_join_request.from.first_name}`)
+      console.log("APPROVED")
+    } catch(e) {
+      console.log("ERROR", e)
+    }
+    let link = await noteUser(ctx, 'indirect')
+    ctx.reply(`Your link is ${link}`)
+  }
+})
+app.command('gasBalances', () => Scenes.Stage.enter('gasBalance'))
 
+app.on('message', (ctx => {
+  console.log(ctx)
+}))
 app.on('location', (ctx) => {
   let lat = ctx.update.message.location.latitude
   let lon = ctx.update.message.location.longitude
@@ -206,9 +270,10 @@ app.on('location', (ctx) => {
 })
 
 // User Actions
-app.action('user_register',  Scenes.Stage.enter('userRegister'))
-app.action('token_creation', Scenes.Stage.enter('tokenCreation'))
-app.action('gas_balance',    Scenes.Stage.enter('gasBalance'))
-app.action('gas_load',       Scenes.Stage.enter('gasLoad'))
+app.action('user_register',     Scenes.Stage.enter('userRegister'))
+app.action('user_verification', Scenes.Stage.enter('userVerification'))
+app.action('token_creation',    Scenes.Stage.enter('tokenCreation'))
+app.action('gas_balance',       Scenes.Stage.enter('gasBalance'))
+app.action('gas_load',          Scenes.Stage.enter('gasLoad'))
 
 app.startPolling()
