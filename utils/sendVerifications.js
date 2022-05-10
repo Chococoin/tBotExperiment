@@ -19,7 +19,7 @@ async function sendVerifications (mail, phone, phoneCode, emailCode) {
       text: `This is the email verification code ${emailCode} to registrate your user account successfully`,
       html: `<p>This is the email verification code ${emailCode} to registrate your user account successfully</p>`
     }
-    return msg;
+    return msg
   }
 
   const msg = email(mail, emailCode)

@@ -3,7 +3,7 @@ const { Schema, model } = mongoose
 
 const UserSchema = new Schema({
   username : { type: String, required: false, unique: true },
-  telegramID: { type: Number, required: true },
+  telegramID: { type: Number, required: true, unique: true },
   name: { type: String, required: false },
   language: { type: String, required: false },
   referer: { type: Number, required: false },
@@ -17,4 +17,3 @@ const UserSchema = new Schema({
 });
 
 module.exports = model('User', UserSchema)
-

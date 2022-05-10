@@ -23,6 +23,7 @@ step2.on('message', async (ctx) => {
   }
   if ( !oldUserRegistered && reEmail.test(ctx.message.text) ) {
     newUser.email = ctx.message.text
+    if (ctx.update.message.from.username) newUser.username = ctx.update.message.from.username
     newUser.telegramID = ctx.update.message.from.id
     newUser.emailCode = randomCode()
     ctx.reply(`I have received your email ${ctx.message.text}\nNow please write your phone number`)
@@ -40,7 +41,7 @@ step2.on('message', async (ctx) => {
 const step3 = new Composer()
 
 step3.on('message', async (ctx) => {
-  if(parseInt(ctx.message.text) && rePhone.test(ctx.message.text)) {
+  if( parseInt(ctx.message.text) && rePhone.test(ctx.message.text) ) {
     ctx.reply(`I have received your phone ${ctx.message.text}\nAfter receive verification codes by SMS and email you have to enter it clicking /verification.`)
     newUser.phone = ctx.message.text
     newUser.phoneCode = randomCode()

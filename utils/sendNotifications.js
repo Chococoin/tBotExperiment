@@ -9,7 +9,7 @@ const TWILIO_AUTH_TOKEN = process.env.TWILIO_AUTH_TOKEN
 const sms = require('twilio')(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
 const TWILIO_PHONE = process.env.TWILIO_PHONE
 
-async function sendNotification (mail, phone) {
+async function sendNotifications (mail, phone) {
 
   let email = ( mail ) => {
     let msg = {
@@ -22,7 +22,7 @@ async function sendNotification (mail, phone) {
     return msg
   }
 
-  const msg = email(mail, emailCode)
+  const msg = email( mail )
 
   sms.messages
     .create({
@@ -38,4 +38,4 @@ async function sendNotification (mail, phone) {
     .catch((error) => {console.error(error)})
 }
 
-module.exports = { sendNotification }
+module.exports = sendNotifications
