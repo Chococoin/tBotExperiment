@@ -17,7 +17,9 @@ const UserSchema = new Schema({
   emailCode: { type: Number },
   verifiedPhone: { type: Boolean, default: false },
   verifiedEmail: { type: Boolean, default: false },
-  passphase: { type: Array, default: () => bip39.generateMnemonic() },
+  // TODO: Add salt to passphrase
+  passphrase: { type: Array, default: () => bip39.generateMnemonic()},
+  address: { type: String, default: 'none'},
   link: { type: String, required: false, default: "broken_link" },
 });
 

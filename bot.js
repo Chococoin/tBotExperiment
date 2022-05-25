@@ -9,20 +9,21 @@ const Web3 = require('web3')
 const Units = require('ethereumjs-units')
 const Mail = require('@sendgrid/mail')
 const HDWalletProvider = require('@truffle/hdwallet-provider')
-const events = require('events')
+// const events = require('events')
 const bip39 = require('bip39')
-const eventEmitter = new events.EventEmitter()
+// const eventEmitter = new events.EventEmitter()
 
+const tokenCreation = require('./Scenes/tokenCreation')
 const noteUser = require('./utils/noteUser').noteUser
 const userRegister = require('./Scenes/userRegister').userRegister
 const userVerification = require('./Scenes/userVerification').userVerification
-const tokenCreation = require('./Scenes/tokenCreation').tokenCreation
-const gasBalance = require('./Scenes/gas').gasBalance
-const gasLoad = require('./Scenes/gas').gasLoad
+const { gasLoad, gasBalance, gasCollector, gasInvest } = require('./Scenes/gas')
 const dbCount = require('./utils/dbCount')
 const createLink = require('./utils/createLink')
 
-eventEmitter.on('token_creation', (...args) => console.log(...args))
+
+
+// eventEmitter.on('token_creation', (res) => console.log("Token Creation!!!!!", res))
 // eventEmitter.on('user_creation', (...args) => console.log("USER CREATION",...args))
 
 const mongoose = require('mongoose')
@@ -84,6 +85,10 @@ app.telegram.setMyCommands(
     {
       command     : '/play_video',
       description : 'Play Pincay Video'
+    },
+    {
+      command     : '/ntf_creation',
+      description : 'Creation an NFT'
     },
   ]
 );
@@ -180,6 +185,11 @@ app.command('asklink', async ctx => {
   }
 })
 
+app.command('nft_creation', (ctx) => {
+  ctx.reply("Hola!")
+  Scenes.Stage.enter('tokenCreation')()
+})
+
 // TODO: Review commands
 // app.command('create_new_user', (ctx) => {
 //   const mnemonic2 = bip39.generateMnemonic()
@@ -241,33 +251,10 @@ app.on('chat_join_request', async (ctx) => {
     ctx.reply(`Your link is ${link}`)
   }
 })
-app.command('gasBalances', () => Scenes.Stage.enter('gasBalance'))
 
-app.on('message', (ctx => {
-  console.log(ctx)
-}))
-app.on('location', (ctx) => {
-  let lat = ctx.update.message.location.latitude
-  let lon = ctx.update.message.location.longitude
-  let lang = ctx.update.message.from.language_code
-  ctx.reply('Enter the token name')
-  axios.get('https://api.what3words.com/v3/convert-to-3wa', {
-    params: {
-      coordinates: `${lat},${lon}`,
-      language: lang,
-      key: what3WordsApiKey
-    }
-  })
-  .then((response) => {
-    eventEmitter.emit('successful_payment', response.data)
-  })
-  .catch(function (error) {
-    console.log(error)
-  })
-  .finally(function () {
-    console.log("Finish")
-  })
-})
+// app.on('message', (ctx => {
+//   console.log(ctx)
+// }))
 
 // User Actions
 app.action('user_register',     Scenes.Stage.enter('userRegister'))
@@ -275,5 +262,7 @@ app.action('user_verification', Scenes.Stage.enter('userVerification'))
 app.action('token_creation',    Scenes.Stage.enter('tokenCreation'))
 app.action('gas_balance',       Scenes.Stage.enter('gasBalance'))
 app.action('gas_load',          Scenes.Stage.enter('gasLoad'))
+app.action('gas_collector',     Scenes.Stage.enter('gasCollector'))
+app.action('gas_invest',        Scenes.Stage.enter('gasInvest'))
 
 app.startPolling()
