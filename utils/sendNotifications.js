@@ -38,4 +38,43 @@ async function sendNotifications (mail, phone) {
     .catch((error) => {console.error(error)})
 }
 
-module.exports = sendNotifications
+async function sendNTFNotifications (mail, phone, NFTdata) {
+  let email = ( mail ) => {
+    let msg = {
+      to: mail,
+      from: SENDGRID_VALID_EMAIL,
+      subject: `ChocoCryptoBot: Your have mint the NFT titled ${NFTdata.metadata.name}`,
+      html: '<h1>Your have mint an NFT</h1>' +
+            '<h3>TOKEN ID:</h3>' +
+            `<p>${NFTdata.tokenId}</p>` +
+            '<h3>OWNER ADDRESS</h3>' +
+            `<p>${NFTdata.ownerAddress}</p>` +
+            '<h3>NFT TITLE</h3>' +
+            `<p>${NFTdata.metadata.name}</p>` +
+            '<h3>NFT DESCRIPTION</h3>' +
+            `<p>${NFTdata.metadata.description}</p>` +
+            '<h3>NFT IMAGE</h3>' +
+            `<p>${NFTdata.metadata.image}</p>` +
+            '<h3>NFT METADATA</h3>' +
+            `<p>${NFTdata.metadataGatewayURL}</p>`
+    }
+    return msg
+  }
+
+  const msg = email( mail )
+
+  sms.messages
+    .create({
+      body: `Your have mint an NFT title ${NFTdata.metadata.name}. For more info check your email.`,
+      from: `${TWILIO_PHONE}`,
+      to: '+39' + phone
+    })
+    .then(message => console.log(message.sid))
+    .catch((error) => {console.error(error)})
+
+  sgMail.send(msg)
+    .then(console.log( "Email sent"))
+    .catch((error) => {console.error(error)})
+}
+
+module.exports = { sendNotifications , sendNTFNotifications }
