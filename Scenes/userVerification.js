@@ -1,6 +1,6 @@
 const { Scenes, Composer } = require('telegraf')
 const generateAddresses = require('../utils/generateAdrresses.js')
-const sendNotifications = require('../utils/sendNotifications.js')
+const sendNotifications = require('../utils/sendNotifications.js').sendNotifications
 const User = require('../Schemas/User.js')
 let user
 
