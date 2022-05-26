@@ -82,7 +82,7 @@ async function createNFT(imagePath, options) {
     })
 
     const nft = await minty.createNFTFromAssetFile(imagePath, answers)
-    console.log('🌿 Minted a new NFT: ')
+    // console.log('🌿 Minted a new NFT: ')
 
     alignOutput([
         ['Token ID:', chalk.green(nft.tokenId)],
@@ -91,8 +91,8 @@ async function createNFT(imagePath, options) {
         ['Asset Address:', chalk.blue(nft.assetURI)],
         ['Asset Gateway URL:', chalk.blue(nft.assetGatewayURL)],
     ])
-    console.log('NFT Metadata:')
-    console.log(colorize(JSON.stringify(nft.metadata), colorizeOptions))
+    console.log('BIG OBJECT')
+    console.log(JSON.stringify(nft))
 }
 
 async function getNFT(tokenId, options) {
