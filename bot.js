@@ -3,15 +3,12 @@
 require('dotenv').config()
 const { Telegraf, Markup, Scenes, session } = require('telegraf')
 const axios = require('axios')
-// const what3words = require("@what3words/api")
 const fs = require('fs')
 const Web3 = require('web3')
 const Units = require('ethereumjs-units')
 const Mail = require('@sendgrid/mail')
 const HDWalletProvider = require('@truffle/hdwallet-provider')
-// const events = require('events')
 const bip39 = require('bip39')
-// const eventEmitter = new events.EventEmitter()
 
 const tokenCreation = require('./Scenes/tokenCreation')
 const noteUser = require('./utils/noteUser').noteUser
@@ -20,11 +17,6 @@ const userVerification = require('./Scenes/userVerification').userVerification
 const { gasLoad, gasBalance, gasCollector, gasInvest } = require('./Scenes/gas')
 const dbCount = require('./utils/dbCount')
 const createLink = require('./utils/createLink')
-
-
-
-// eventEmitter.on('token_creation', (res) => console.log("Token Creation!!!!!", res))
-// eventEmitter.on('user_creation', (...args) => console.log("USER CREATION",...args))
 
 const mongoose = require('mongoose')
 const User = require('./Schemas/User.js')
@@ -38,10 +30,8 @@ async function db() {
 }
 
 const telegramApiKey = fs.readFileSync(".telegramApiKey").toString().trim()
-// const PAYMENT_TOKEN = fs.readFileSync(".stripeApiKey").toString().trim() /* This version won't use stripe */
 
 const what3WordsApiKey = fs.readFileSync(".what3wordsApiKey").toString().trim() // TODO: Use it to tokenize trees.
-// what3words.setOptions({ key: what3WordsApiKey })
 
 const mnemonic = fs.readFileSync(".secret").toString().trim()
 const infuraApi = fs.readFileSync(".infuraApiKey").toString().trim()
@@ -183,11 +173,6 @@ app.command('asklink', async ctx => {
   } else {
     ctx.reply('A no registered user can\'t apply for a referrer link.')
   }
-})
-
-app.command('nft_creation', (ctx) => {
-  ctx.reply("Hola!")
-  Scenes.Stage.enter('tokenCreation')()
 })
 
 // TODO: Review commands
