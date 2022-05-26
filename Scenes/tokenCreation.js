@@ -3,26 +3,38 @@
 require('dotenv').config()
 const { Scenes, Composer } = require('telegraf')
 const fileManager = require('../utils/fileManager')
-const what3words = require("@what3words/api")
 const axios = require('axios')
 const shell = require('shelljs')
+const sendNFTNotifications = require('../utils/sendNotifications.js').sendNTFNotifications
+const NFTdataParser = require('../utils/NFTdataParser.js')
+const User = require('../Schemas/User.js')
 
-let imagePath, deedData, lat, lon, lang, description, tittle
+let imagePath, deedData, lat, lon, lang, description, tittle, user
 
-const step1 = (ctx) => {
-  // shell.exec('./minty/.start-local-enviroment.sh')
-  ctx.reply('Let\'s create your token.\n' +
-            '1) First send me a picture of your art.\n'  +
-            '2) Send me your location.\n' +
-            '3) Write to me the title of your NFT.\n' +
-            '4) Give to your NTF a description. (If not given)')
-  return ctx.wizard.next()
+const step1 = async (ctx) => {
+  try {
+    user = await User.findOne({ telegramID: ctx.update.callback_query.from.id })
+  } catch (err) {
+    console.log(err)
+    return ctx.scene.leave()
+  }
+  if (user && user.verifiedEmail && user.verifiedPhone) {
+    ctx.reply('Let\'s create your token.\n' +
+    '1) First send me a picture of your art.\n'  +
+    '2) Send me your location.\n' +
+    '3) Write to me the title of your NFT.\n' +
+    '4) Give to your NTF a description. (If not given)')
+    return ctx.wizard.next()
+  } else {
+    ctx.reply("You must be verified to min a NFT.")
+    return ctx.scene.leave()
+  }
 }
 
 const step2 = new Composer()
 
 step2.command('help', (ctx) => {
-  ctx.reply('1) First send me a picture of your art or click /cancel to exit.')
+  ctx.reply('1) First step is send me a picture of your art or click /cancel to stop mint a NFT.')
 })
 
 step2.command('cancel', (ctx) => {
@@ -33,8 +45,8 @@ step2.command('cancel', (ctx) => {
 step2.on('photo', async (ctx) => {
   ctx.reply('I have received the image of your NFT.\nStep 2) Send me your localization.')
   let photos = ctx.update.message.photo
-  console.log(ctx.update.message.caption)
-  if ( ctx.update.message.caption ) description = ctx.update.message.caption
+  // console.log(ctx.update.message.caption)
+  // if ( ctx.update.message.caption ) description = ctx.update.message.caption
   const { file_id: fileId } = photos[photos.length - 1]
   const { file_unique_id: fileUniqueId } = photos[photos.length - 1]
   const fileUrl = await ctx.telegram.getFileLink(fileId)
@@ -106,10 +118,11 @@ step4.on('message', async (ctx) => {
 const step5 = new Composer()
 
 step5.on('message', async (ctx) => {
-  console.log(ctx.update.message)
   description = ctx.update.message.text
-  const b = await shell.exec(`minty mint ${ imagePath } --name ${ tittle } --description ${ description }`)
-  ctx.reply(b.stdout)
+  const NFTdata = await shell.exec(`minty mint ${ imagePath } --name "${ tittle }" --description "${ description }"`)
+  ctx.reply(NFTdata.stdout)
+  const dataJson = NFTdataParser(NFTdata.stdout) 
+  sendNFTNotifications(user.email, user.phone, dataJson)
   return ctx.scene.leave()
 })
 
