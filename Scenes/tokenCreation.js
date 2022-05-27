@@ -101,7 +101,7 @@ step3.on('message', (ctx) => {
 const step4 = new Composer()
 
 step4.command('help', (ctx) => {
-  ctx.reply('3) Send a description of yor NFT.')
+  ctx.reply('4) Send a description of yor NFT.')
 })
 
 step4.command('cancel', (ctx) => {
@@ -111,7 +111,7 @@ step4.command('cancel', (ctx) => {
 
 step4.on('message', async (ctx) => {
   tittle = ctx.update.message.text
-  ctx.reply('3) Send a description of yor NFT.')
+  ctx.reply('4) Send a description of yor NFT.')
   return ctx.wizard.next()
 })
 
@@ -120,9 +120,14 @@ const step5 = new Composer()
 step5.on('message', async (ctx) => {
   description = ctx.update.message.text
   const NFTdata = await shell.exec(`minty mint ${ imagePath } --name "${ tittle }" --description "${ description }"`)
-  ctx.reply(NFTdata.stdout)
   const dataJson = NFTdataParser(NFTdata.stdout) 
-  sendNFTNotifications(user.email, user.phone, dataJson)
+  const NFTtransfer = await shell.exec(`minty transfer ${ dataJson.tokenId } ${ user.address }`)
+  if(NFTtransfer.stdout) {
+    ctx.reply("Your NFT was created.")
+    sendNFTNotifications(user.email, user.phone, dataJson)
+  } else {
+    ctx.reply("An error while creating your NFT was occurred.")
+  }
   return ctx.scene.leave()
 })
 
