@@ -142,6 +142,7 @@ step5.on('message', async (ctx) => {
       } else {
         ctx.reply("An error while creating your NFT was occurred.")
       }
+      fileManager.deleteFile(imagePath)
       return ctx.scene.leave()
     } catch (error) {
       console.log(error)
@@ -151,8 +152,6 @@ step5.on('message', async (ctx) => {
     ctx.reply("Please send a text as description.")
     return ctx.wizard.selectStep(currentStepIndex)
   }
-
-
 })
 
 const tokenCreation = new Scenes.WizardScene('tokenCreation',
