@@ -1,16 +1,27 @@
 const { Scenes, Composer } = require('telegraf')
 const User = require('../Schemas/User.js')
+const QRCode = require('qrcode')
 const Web3 = require('web3')
+const web3 = new Web3('http://127.0.0.1:8545/')
+const imageDataURI = require('image-data-uri')
+const fs = require('fs')
 
 /**  ===== GASBALANCE ===== */
 
 let balance = 0
-
-const gasBalance1 = (ctx) => {
-  let user = User.findOne({ telegramID: ctx.update.callback_query.from.id })
-  // TODO: Call web tree
-  ctx.reply(user.passphrase[1])
-  ctx.reply(`${user.username}, you have a NUMBER as balance of gas`)
+/* Implement balance gas. */ 
+const gasBalance1 = async (ctx) => {
+  let user
+  try {
+    user = await User.findOne({ telegramID: ctx.update.callback_query.from.id })
+  } catch (error) {
+    console.log(error)
+    ctx.reply("User not register. Click /start to register.")
+    return ctx.scene.leave()
+  }
+  let balance = await web3.eth.getBalance(user.address)
+  balance = web3.utils.fromWei(balance)
+  ctx.reply(`${ user.username }, you have ${ balance } as balance of gas in your account`)
   return ctx.wizard.next()
 }
 
@@ -34,11 +45,20 @@ const gasBalance = new Scenes.WizardScene('gasBalance',
 )
 /**  ===== GASLOAD ===== */
 
-const gasLoad1 = (ctx) => {
-  let user = User.findOne({ telegramID: ctx.update.callback_query.from.id })
-  // TODO: Call web tree
-  ctx.reply(user.passphrase[1])
-  ctx.reply(`${user.username}, you have a NUMBER as balance of gas`)
+const gasLoad1 = async (ctx) => {
+  let user = await User.findOne({ telegramID: ctx.update.callback_query.from.id })
+  if ( user && user.verifiedPhone && user.verifiedEmail) {
+    QRCode.toDataURL(`${user.address}`, { errorCorrectionLevel: 'H' }, async function (err, url) {
+      if (err) {
+        ctx.reply("Some trouble is happening.")
+        console.log("Some trouble is happening.")
+      } else {
+        let img = await imageDataURI.outputFile(url, 'decoded-image.png')
+        console.log(img)
+        ctx.replyWithPhoto({ source: fs.createReadStream(img) })
+      }
+    })
+  }
   return ctx.wizard.next()
 }
 

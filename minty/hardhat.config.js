@@ -1,5 +1,5 @@
-// require("@nomiclabs/hardhat-waffle")
-// require("@nomiclabs/hardhat-ganache")
+require("@nomiclabs/hardhat-waffle")
+require("@nomiclabs/hardhat-ganache")
 require('@nomiclabs/hardhat-ethers')
 
 /**
@@ -8,7 +8,7 @@ require('@nomiclabs/hardhat-ethers')
 module.exports = {
     solidity: "0.7.3",
 
-    defaultNetwork: 'localhost',
+    defaultNetwork: 'default',
     networks: {
         hardhat: {},
         localhost: {},

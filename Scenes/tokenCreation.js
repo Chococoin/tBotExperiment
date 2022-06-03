@@ -9,7 +9,7 @@ const sendNFTNotifications = require('../utils/sendNotifications.js').sendNTFNot
 const NFTdataParser = require('../utils/NFTdataParser.js')
 const User = require('../Schemas/User.js')
 
-let imagePath, deedData, lat, lon, lang, description, tittle, user
+let imagePath, deedData, lat, lon, lang, description, title, user
 
 const step1 = async (ctx) => {
   try {
@@ -88,7 +88,7 @@ step3.on('location', async (ctx) => {
     console.log(error)
   })
   .finally(() => {
-    ctx.reply('3) Send a tittle of yor NFT.')
+    ctx.reply('3) Send a title of yor NFT')
     return ctx.wizard.next()
   })
 })
@@ -101,7 +101,7 @@ step3.on('message', (ctx) => {
 const step4 = new Composer()
 
 step4.command('help', (ctx) => {
-  ctx.reply('4) Send a description of yor NFT.')
+  ctx.reply('3) Send a title of yor NFT.')
 })
 
 step4.command('cancel', (ctx) => {
@@ -110,7 +110,12 @@ step4.command('cancel', (ctx) => {
 })
 
 step4.on('message', async (ctx) => {
-  tittle = ctx.update.message.text
+  if (ctx.update.message.text != (typeof undefined)){ 
+    title = ctx.update.message.text
+  } else {
+    ctx.reply("Huston, we have a problem!")
+  }
+  console.log(typeof ctx.update.message.text)
   ctx.reply('4) Send a description of yor NFT.')
   return ctx.wizard.next()
 })
@@ -119,16 +124,27 @@ const step5 = new Composer()
 
 step5.on('message', async (ctx) => {
   description = ctx.update.message.text
-  const NFTdata = await shell.exec(`minty mint ${ imagePath } --name "${ tittle }" --description "${ description }"`)
-  const dataJson = NFTdataParser(NFTdata.stdout) 
-  const NFTtransfer = await shell.exec(`minty transfer ${ dataJson.tokenId } ${ user.address }`)
-  if(NFTtransfer.stdout) {
-    ctx.reply("Your NFT was created.")
-    sendNFTNotifications(user.email, user.phone, dataJson)
-  } else {
-    ctx.reply("An error while creating your NFT was occurred.")
+  try {
+    const NFTdata = await shell.exec(`minty mint ${ imagePath } --name "${ title }" --description "${ description }"`)
+    if ( NFTdata.length === 0 ) {
+      console.log(NFTdata) 
+      ctx.reply("Sorry, I'm having a problem with a bridge at this time.")
+      return ctx.scene.leave()
+    }
+    const dataJson = NFTdataParser(NFTdata.stdout) 
+    const NFTtransfer = await shell.exec(`minty transfer ${ dataJson.tokenId } ${ user.address }`)
+    if(NFTtransfer.stdout) {
+      ctx.reply("Your NFT was created. You are going to receive an sms and an email with details about you NFT.")
+      sendNFTNotifications(user.email, user.phone, dataJson)
+    } else {
+      ctx.reply("An error while creating your NFT was occurred.")
+    }
+    return ctx.scene.leave()
+  } catch (error) {
+    console.log(error)
+    return ctx.scene.leave()
   }
-  return ctx.scene.leave()
+
 })
 
 const tokenCreation = new Scenes.WizardScene('tokenCreation',

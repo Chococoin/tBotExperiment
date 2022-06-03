@@ -58,27 +58,27 @@ app.telegram.setMyCommands(
   [
     {
       command     : '/start',
-      description : '⭐ Start Bot ⭐'
+      description : 'Registration and verification'
     },
     {
-      command     : '/help',
-      description : '⭐ Help Bot ⭐'
+      command     : '/account',
+      description : 'Load gas and show gas balance'
     },
     {
-      command     : '/buy',
-      description : '⭐ Buy Bot ⭐'
-    },
-    {
-      command     : '/create_new_user',
-      description : 'Create a new User'
+      command     : '/create_a_character',
+      description : 'Create a new character'
     },
     {
       command     : '/play_video',
       description : 'Play Pincay Video'
     },
     {
-      command     : '/ntf_creation',
+      command     : '/nft_creation',
       description : 'Creation an NFT'
+    },
+    {
+      command     : '/help',
+      description : '⭐ Help Bot ⭐'
     },
   ]
 );
@@ -137,11 +137,27 @@ function createInvoice (product) {
 
 app.start((ctx) => {
   let userFirstName = ctx.message.from.first_name
-  let message = ` Hello ${userFirstName}, select an action?`
-
+  let message = `Hello ${userFirstName}, select an action?`
   let options = Markup.inlineKeyboard([
     Markup.button.callback('User register', 'user_register'),
-    Markup.button.callback('Token Creation', 'token_creation'),
+    Markup.button.callback('User Verification', 'user_verification'),
+  ])
+  ctx.reply(message, options)
+})
+
+app.command('nft_creation', (ctx) => {
+  let userFirstName = ctx.message.from.first_name
+  let message = `Hello ${userFirstName}, ready to create an NFT?`
+  let options = Markup.inlineKeyboard([
+    Markup.button.callback('Create an NFT', 'token_creation'),
+  ])
+  ctx.reply(message, options)
+})
+
+
+app.command('account', (ctx) => {
+  let message = `Charge your profile whit gas to pay transaction as NTF creation\nthen click the button bellow`
+  let options = Markup.inlineKeyboard([
     Markup.button.callback('Gas Balance', 'gas_balance'),
     Markup.button.callback('Gas Load', 'gas_load'),
   ])
@@ -150,9 +166,16 @@ app.start((ctx) => {
 
 app.command('verification', (ctx) => {
   let message = `Look for you sms code and you email code\nthen click the button bellow`
-
   let options = Markup.inlineKeyboard([
     Markup.button.callback('User Verification', 'user_verification'),
+  ])
+  ctx.reply(message, options)
+})
+
+app.command('register', (ctx) => {
+  let message = `Register using a phone and an email.`
+  let options = Markup.inlineKeyboard([
+    Markup.button.callback('User Registration', 'user_register'),
   ])
   ctx.reply(message, options)
 })
@@ -236,10 +259,6 @@ app.on('chat_join_request', async (ctx) => {
     ctx.reply(`Your link is ${link}`)
   }
 })
-
-// app.on('message', (ctx => {
-//   console.log(ctx)
-// }))
 
 // User Actions
 app.action('user_register',     Scenes.Stage.enter('userRegister'))

@@ -11,24 +11,35 @@ const step1 = async (ctx) => {
     ctx.reply('Something went wrong.')
     logError(ctx, err)
   }
-  if ( user && !user.verifiedPhone && !user.verifiedEmail ) {
-    ctx.reply('Let\'s verifing your account using the 6 digit code you has received by SMS and email.\nFirst enter your SMS code.')
-    return ctx.wizard.next()
-  }
-  if ( user && user.verifiedPhone && !user.verifiedEmail ) {
-    ctx.reply('Please verified your email using the 6 digit code you has received by email')
-    return ctx.wizard.next()
-  }
-  if ( user && !user.verifiedPhone && user.verifiedEmail ) {
-    ctx.reply('Please verified your phone using the 6 digit code you has received by sms')
-    return ctx.wizard.next()
-  }
-  if ( user && user.verifiedPhone && user.verifiedEmail ) {
-    ctx.reply("No need to enter code. User already registered.")
-    if(user.address != 'none') ctx.reply(user.address)
+  if(user) {
+    if ( !user.verifiedPhone && !user.verifiedEmail ) {
+      ctx.reply('Let\'s verifing your account using the 6 digit code you has received by SMS and email.\nFirst enter your SMS code.')
+      return ctx.wizard.next()
+    }
+    if ( user.verifiedPhone && !user.verifiedEmail ) {
+      ctx.reply('Please verified your email using the 6 digit code you has received by email')
+      return ctx.wizard.next()
+    }
+    if ( !user.verifiedPhone && user.verifiedEmail ) {
+      ctx.reply('Please verified your phone using the 6 digit code you has received by sms')
+      return ctx.wizard.next()
+    }
+    if ( user.verifiedPhone && user.verifiedEmail ) {
+      ctx.reply("No need to enter code. User already registered.")
+      if(user.address != 'none') ctx.reply(user.address)
+      return ctx.scene.leave()
+    }
+  } else {
+    ctx.reply("Remember to /register as first thing to do.")
     return ctx.scene.leave()
   }
+
 }
+
+// step2.command('cancel', (ctx) => {
+//   ctx.reply('Verification process canceled.')
+//   return ctx.scene.leave()
+// })
 
 const step2 = new Composer()
 
@@ -54,7 +65,9 @@ step2.on('message', async (ctx) => {
       ctx.reply('Phone and Email code confirmed.')
       return ctx.scene.leave()
     } else {
+      // TODO: Check if /verifiedEmail works
       ctx.reply('Phone code confirmed. Now /verifiedEmail')
+      return ctx.wizard.next()
     }
   }
 
@@ -63,6 +76,7 @@ step2.on('message', async (ctx) => {
     if(user.verifiedPhone) {
       ctx.reply('Phone and Email code confirmed.')
     } else {
+      // TODO: Check if /verifiedPhone works
       ctx.reply('Email code confirmed. Now /verifiedPhone')
     }
   }
