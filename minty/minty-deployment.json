@@ -1,9 +1,9 @@
 {
-  "network": "localhost",
+  "network": "matic",
   "contract": {
     "name": "Minty",
-    "address": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
-    "signerAddress": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+    "address": "0x0818320D462DE1E886389b3C87452Bb24EcCeDca",
+    "signerAddress": "0x21CA3143BA96F6Df21C5C58e1120A0fe1074BB32",
     "abi": [
       "constructor(string tokenName, string symbol)",
       "event Approval(address indexed owner, address indexed approved, uint256 indexed tokenId)",
