@@ -25,7 +25,11 @@ const step1 = async (ctx) => {
       return ctx.wizard.next()
     }
     if ( user.verifiedPhone && user.verifiedEmail ) {
-      ctx.reply("No need to enter code. User already registered.")
+      if(user.address === 'none') {
+        user.address = generateAddresses(user.passphrase[0])
+        await user.save()
+      }
+      ctx.reply(`No need to enter code. User already registered.\n${user.address}`)
       if(user.address != 'none') ctx.reply(user.address)
       return ctx.scene.leave()
     }
