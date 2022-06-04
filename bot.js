@@ -31,8 +31,6 @@ async function db() {
 
 const telegramApiKey = fs.readFileSync(".telegramApiKey").toString().trim()
 
-const what3WordsApiKey = fs.readFileSync(".what3wordsApiKey").toString().trim() // TODO: Use it to tokenize trees.
-
 const mnemonic = fs.readFileSync(".secret").toString().trim()
 const infuraApi = fs.readFileSync(".infuraApiKey").toString().trim()
 
@@ -74,11 +72,11 @@ app.telegram.setMyCommands(
     },
     {
       command     : '/nft_creation',
-      description : 'Creation an NFT'
+      description : '⭐ Create an NFT ⭐'
     },
     {
       command     : '/help',
-      description : '⭐ Help Bot ⭐'
+      description : 'Help Bot'
     },
   ]
 );
@@ -153,7 +151,6 @@ app.command('nft_creation', (ctx) => {
   ])
   ctx.reply(message, options)
 })
-
 
 app.command('account', (ctx) => {
   let message = `Charge your profile whit gas to pay transaction as NTF creation\nthen click the button bellow`
