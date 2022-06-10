@@ -7,7 +7,7 @@ contract Treasury {
     uint public balance;
     address public owner;
     mapping ( address => uint256 ) public treasuryBalanceOf;
-    address payable public vault;
+    mapping ( address => address ) public referer;
     address payable public treasuryBox;
 
     event RecieveData(bytes _data);
@@ -15,14 +15,22 @@ contract Treasury {
     constructor () payable {
         owner = msg.sender;
         treasuryBox = payable(msg.sender);
-        vault = payable(msg.sender);
         storicalOutput = 0;
-        storicalEntries = msg.value;
+        storicalEntries = 0;
         setBalance();
     }
 
     function donate() public payable {
         (bool success, bytes memory data) = treasuryBox.call{value: msg.value }("10");
+        emit RecieveData(data);
+        storicalEntries += msg.value;
+        setBalance();
+        treasuryBalanceOf[msg.sender] += msg.value;
+        require(success, "Failed to send money");
+    }
+
+    function outSoursing() public payable {
+        (bool success, bytes memory data) = treasuryBox.call{value: msg.value }("");
         emit RecieveData(data);
         storicalEntries += msg.value;
         setBalance();
