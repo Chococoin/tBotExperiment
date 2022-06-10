@@ -40,11 +40,6 @@ const step1 = async (ctx) => {
 
 }
 
-// step2.command('cancel', (ctx) => {
-//   ctx.reply('Verification process canceled.')
-//   return ctx.scene.leave()
-// })
-
 const step2 = new Composer()
 
 step2.on('message', async (ctx) => {
@@ -99,13 +94,6 @@ step2.on('message', async (ctx) => {
     ctx.reply('Wrong code. Try again.')
     return ctx.wizard.selectStep(currentStepIndex)
   }
-
-  // if (user.verifiedPhone && !user.verifiedEmail) return ctx.wizard.selectStep(currentStepIndex - 1)
-  // if (!user.verifiedPhone && user.verifiedEmail) return ctx.wizard.selectStep(currentStepIndex - 1) 
-  // if (!user.verifiedPhone && !user.verifiedEmail) return ctx.wizard.selectStep(currentStepIndex - 2)
-  // const userAddress = generateAddresses(user.passphrase[0])
-  // ctx.reply(`User registred ${ userAddress }!`)
-  // return ctx.scene.leave()
 })
 
 step2.command('verifiedPhone', (ctx) => {
