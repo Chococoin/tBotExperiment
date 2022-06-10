@@ -1,6 +1,6 @@
 const { Scenes, Composer } = require('telegraf')
-const generateAddresses = require('../utils/generateAdrresses.js')
-const sendNotifications = require('../utils/sendNotifications.js').sendNotifications
+const generateAddresses = require('../utils/generateAddresses.js')
+const sendVerifications = require('../utils/sendVerifications.js')
 const User = require('../Schemas/User.js')
 let user
 
@@ -13,7 +13,7 @@ const step1 = async (ctx) => {
   }
   if(user) {
     if ( !user.verifiedPhone && !user.verifiedEmail ) {
-      ctx.reply('Let\'s verifing your account using the 6 digit code you has received by SMS and email.\nFirst enter your SMS code.')
+      ctx.reply('Let\'s verify your account using the 6 digit code you has received by SMS and email.\nFirst enter your SMS code.')
       return ctx.wizard.next()
     }
     if ( user.verifiedPhone && !user.verifiedEmail ) {
@@ -21,7 +21,7 @@ const step1 = async (ctx) => {
       return ctx.wizard.next()
     }
     if ( !user.verifiedPhone && user.verifiedEmail ) {
-      ctx.reply('Please verified your phone using the 6 digit code you has received by sms')
+      ctx.reply('Please verify your phone using the 6 digit code you has received by sms')
       return ctx.wizard.next()
     }
     if ( user.verifiedPhone && user.verifiedEmail ) {
@@ -30,7 +30,7 @@ const step1 = async (ctx) => {
         await user.save()
       }
       ctx.reply(`No need to enter code. User already registered.\n${user.address}`)
-      if(user.address != 'none') ctx.reply(user.address)
+      if(user.address != 'none') ctx.reply(`Your chococoin temporal address is${ user.address }`)
       return ctx.scene.leave()
     }
   } else {
@@ -63,22 +63,32 @@ step2.on('message', async (ctx) => {
     return ctx.scene.leave()
   }
 
-  if (ctx.message.text == user.phoneCode) {
+  if ( ctx.message.text == user.phoneCode ) {
     user.verifiedPhone = true
-    if(user.verifiedEmail) {
+    await user.save()
+    if ( user.verifiedEmail && user.verifiedPhone ) {
       ctx.reply('Phone and Email code confirmed.')
+      user.address = generateAddresses(user.passphrase[0])
+      await user.save()
+      ctx.reply(`Your chococoin temporal address is${ user.address }`)
+      sendVerifications(user.email, user.phone, user.username)
       return ctx.scene.leave()
     } else {
       // TODO: Check if /verifiedEmail works
-      ctx.reply('Phone code confirmed. Now /verifiedEmail')
-      return ctx.wizard.next()
+      ctx.reply('Phone code confirmed. Now enter the code you\'ve recived by email.')
     }
   }
 
   if (ctx.message.text == user.emailCode) {
     user.verifiedEmail = true
-    if(user.verifiedPhone) {
+    await user.save()
+    if ( user.verifiedPhone && user.verifiedEmail ) {
       ctx.reply('Phone and Email code confirmed.')
+      user.address = generateAddresses(user.passphrase[0])
+      await user.save()
+      ctx.reply(`Your chococoin temporal address is${ user.address }`)
+      sendVerifications(user.email, user.phone, user.username)
+      return ctx.scene.leave()
     } else {
       // TODO: Check if /verifiedPhone works
       ctx.reply('Email code confirmed. Now /verifiedPhone')
@@ -89,24 +99,27 @@ step2.on('message', async (ctx) => {
     ctx.reply('Wrong code. Try again.')
     return ctx.wizard.selectStep(currentStepIndex)
   }
-  user.address = generateAddresses(user.passphrase[0])
-  await user.save()
-  if (user.verifiedPhone && !user.verifiedEmail) return ctx.wizard.selectStep(currentStepIndex - 1)
-  if (!user.verifiedPhone && user.verifiedEmail) return ctx.wizard.selectStep(currentStepIndex - 1) 
-  if (!user.verifiedPhone && !user.verifiedEmail) return ctx.wizard.selectStep(currentStepIndex - 2)
-  const userAddress = generateAddresses(user.passphrase[0])
-  ctx.reply(`User registred ${ userAddress }!`)
-  return ctx.scene.leave()
+
+  // if (user.verifiedPhone && !user.verifiedEmail) return ctx.wizard.selectStep(currentStepIndex - 1)
+  // if (!user.verifiedPhone && user.verifiedEmail) return ctx.wizard.selectStep(currentStepIndex - 1) 
+  // if (!user.verifiedPhone && !user.verifiedEmail) return ctx.wizard.selectStep(currentStepIndex - 2)
+  // const userAddress = generateAddresses(user.passphrase[0])
+  // ctx.reply(`User registred ${ userAddress }!`)
+  // return ctx.scene.leave()
 })
 
 step2.command('verifiedPhone', (ctx) => {
+  // TODO: Implement /verifiedPhone
   ctx.reply('Phone verification process canceled.')
-  return ctx.scene.leave()
+  return ctx.wizard.next()
+  // return ctx.scene.leave()
 })
 
 step2.command('verifiedEmail', (ctx) => {
+  // TODO: Implement /verifiedEmail
   ctx.reply('Email verification process canceled.')
-  return ctx.scene.leave()
+  return ctx.wizard.next()
+  // return ctx.scene.leave()
 })
 
 step2.command('cancel', (ctx) => {
@@ -114,79 +127,8 @@ step2.command('cancel', (ctx) => {
   return ctx.scene.leave()
 })
 
-const step3 = new Composer()
-
-step3.on('message', async (ctx) => {
-
-  const currentStepIndex = ctx.wizard.cursor
-
-  try {
-    user = await User.findOne({ telegramID: ctx.update.message.from.id })
-  } catch(err) {
-    ctx.reply('Not registered already')
-    logError(ctx, err)
-  }
-
-  if ( user.verifiedEmail && user.verifiedPhone ) {
-    ctx.reply("User registered successfully")
-    return ctx.scene.leave()
-  }
-
-  if ( ctx.message.text == user.phoneCode ) {
-    user.verifiedPhone = true
-    ctx.reply('Phone code confirmed.\nNow please enter your email code.')
-  }
-
-  if ( ctx.message.text == user.emailCode ) {
-    user.verifiedEmail = true
-    ctx.reply('Email code confirmed.\nNow please enter your phone code.')
-  }
-
-  if (!user.verifiedPhone && !user.verifiedEmail) {
-    ctx.reply('Please enter one of the codes you have received by email or/and SMS.')
-    return ctx.wizard.selectStep(currentStepIndex)
-  }
-
-  if ( ctx.message.text != user.phoneCode && ctx.message.text != user.emailCode) {
-    ctx.reply('Wrong code. Try again.')
-    return ctx.wizard.selectStep(currentStepIndex)
-  }
-
-  await user.save()
-  return ctx.wizard.selectStep(currentStepIndex)
-})
-
-  // try {
-  //   user = await User.findOne({ telegramID: ctx.update.message.from.id })
-  //   // console.log(user)
-  // } catch(err) {
-  //   ctx.reply('Something went wrong: :\'\)')
-  //   logError(ctx, err)
-  // }
-
-  // if (ctx.message.text == user.emailCode) {
-  //   if ( typeof user.passphrase[0] === 'string' ) {
-  //     const userAddress = generateAddresses("user.passphrase[0]")
-  //     user.address = userAddress
-  //   }
-  //   ctx.reply('Email code confirmed.\nVerification process ended.')
-  //   ctx.reply('Your address: ' + userAddress)
-  //   user.verifiedEmail = true
-  //   await user.save()
-  //   // sendNotifications(user.email, user.phone)
-  //   return ctx.scene.leave()
-  // } else {
-  //   ctx.reply("Wrong email code. Please try again or click /cancel")
-  // }
-// })
-
-step3.command('cancel', (ctx) => {
-  ctx.reply('Verification process canceled.')
-  return ctx.scene.leave()
-})
-
 const userVerification = new Scenes.WizardScene('userVerification',
-  (ctx) => step1(ctx), step2, step3
+  (ctx) => step1(ctx), step2
 )
 
 function logError(ctx, err) {
