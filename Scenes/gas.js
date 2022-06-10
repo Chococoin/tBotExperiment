@@ -1,16 +1,18 @@
 const { Scenes, Composer } = require('telegraf')
 const User = require('../Schemas/User.js')
 const QRCode = require('qrcode')
-const Web3 = require('web3')
-const web3 = new Web3('http://127.0.0.1:8545/')
 const imageDataURI = require('image-data-uri')
+
+// const Contract = require('../utils/web4u.js')
+
 const fs = require('fs')
 
-/**  ===== GASBALANCE ===== */
+/*  ===== GASBALANCE ===== */
 
 let balance = 0
 /* Implement balance gas. */ 
 const gasBalance1 = async (ctx) => {
+  const Contract = require('../utils/web4u.js')
   let user
   try {
     user = await User.findOne({ telegramID: ctx.update.callback_query.from.id })
@@ -19,29 +21,25 @@ const gasBalance1 = async (ctx) => {
     ctx.reply("User not register. Click /start to register.")
     return ctx.scene.leave()
   }
-  let balance = await web3.eth.getBalance(user.address)
-  balance = web3.utils.fromWei(balance)
-  ctx.reply(`${ user.username }, you have ${ balance } as balance of gas in your account`)
-  return ctx.wizard.next()
+
+  if ( !user ) {
+    ctx.reply("User not register. Click /start to register.")
+    return ctx.scene.leave()
+  } else {
+    try {
+      balance = await Contract.treasuryBalanceOf(user.address).call()
+      ctx.reply(`${ user.username || 'Dear customer' }, you have ${ balance } as balance of gas in your account`)
+      return ctx.scene.leave()
+    } catch ( error ) {
+      console.log(error)
+      ctx.reply(`Error: ${error}`)
+    }
+  }
+  return ctx.scene.leave()
 }
 
-const gasBalance2 = new Composer()
-
-gasBalance2.on('balance', async (ctx) => {
-  ctx.reply(`You have a balance of gas ${balance}`)
-  if ( balance > 0 ) ctx.reply("You may execute some actions. ")
-  // const currentStepIndex = ctx.wizard.cursor
-  // return ctx.wizard.selectStep(currentStepIndex)
-});
-
-gasBalance2.command('cancel', (ctx) => {
-  ctx.reply('Bye bye')
-  return ctx.scene.leave()
-})
-
 const gasBalance = new Scenes.WizardScene('gasBalance',
-  (ctx) => gasBalance1(ctx),
-  gasBalance2,
+  (ctx) => gasBalance1(ctx)
 )
 /**  ===== GASLOAD ===== */
 
@@ -54,8 +52,8 @@ const gasLoad1 = async (ctx) => {
         console.log("Some trouble is happening.")
       } else {
         let img = await imageDataURI.outputFile(url, 'decoded-image.png')
-        console.log(img)
         ctx.replyWithPhoto({ source: fs.createReadStream(img) })
+        ctx.reply("Charge your profile with cryptos using metamask.")
       }
     })
   }
