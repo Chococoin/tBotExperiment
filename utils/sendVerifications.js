@@ -9,24 +9,24 @@ const TWILIO_AUTH_TOKEN = process.env.TWILIO_AUTH_TOKEN
 const sms = require('twilio')(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
 const TWILIO_PHONE = process.env.TWILIO_PHONE
 
-async function sendVerifications (mail, phone, phoneCode, emailCode) {
+async function sendVerifications (mail, phone, username) {
 
-  let email = ( mail, emailCode ) => {
+  let email = ( mail, username ) => {
     let msg = {
       to: mail,
       from: SENDGRID_VALID_EMAIL,
-      subject: 'This is a notification from chococryptoBot.',
-      text: `This is the email verification code ${emailCode} to registrate your user account successfully`,
-      html: `<p>This is the email verification code ${emailCode} to registrate your user account successfully</p>`
+      subject: 'Your Chocosfera Account was successfully verified.',
+      text: `Hi ${ username || 'Dear customer' }! Your user account was registered and verified successfully! You are one step to the rear of create your art and mint your owns NFT using our telegram bot.`,
+      html: `<p>Hi ${ username || 'Dear customer' }! Your user account was registered and verified successfully! You are one step to the rear of create your art and mint your owns NFT using our telegram bot.</p>`
     }
     return msg
   }
 
-  const msg = email(mail, emailCode)
+  const msg = email( mail, username )
 
   sms.messages
     .create({
-      body: `This is the email verification code ${phoneCode} to registrate your user account successfully`,
+      body: `Hi ${username || 'Dear customer'}! Your user account was registered and verified successfully! You are one step to the rear of create your art and mint your owns NFT using our telegram bot.`,
       from: `${TWILIO_PHONE}`,
       to: '+39' + phone
     })
