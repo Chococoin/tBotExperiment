@@ -1,49 +1,119 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.7;
 
-contract Treasury {
-    uint public storicalEntries;
-    uint public storicalOutput;
-    uint public balance;
-    address public owner;
+import { ERC1155 } from  "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { Pausable } from  "@openzeppelin/contracts/security/Pausable.sol";
+import { ERC1155Burnable } from  "@openzeppelin/contracts/token/ERC1155/extensions/ERC1155Burnable.sol";
+import { ERC1155Supply } from "@openzeppelin/contracts/token/ERC1155/extensions/ERC1155Supply.sol";
+
+/// @custom:security-contact german.lugo@bitnibs.com
+contract Treasury is ERC1155, Ownable, Pausable, ERC1155Burnable, ERC1155Supply {
+
+    uint public treasuryBalance;
+
     mapping ( address => uint256 ) public treasuryBalanceOf;
     mapping ( address => address ) public referer;
     address payable public treasuryBox;
 
-    event RecieveData(bytes _data);
-    
-    constructor () payable {
-        owner = msg.sender;
+    event SentFee(bytes _data);
+    event Withdrawal(uint256 _value, address _address);
+    event SettedReferer(address _refered, address _refering);
+    event OutSourcing(address _sender, uint256 _value);
+    event Bankruptcy(address _newOwner);
+
+    constructor() payable ERC1155("") {
         treasuryBox = payable(msg.sender);
-        storicalOutput = 0;
-        storicalEntries = 0;
-        setBalance();
+        if (msg.value > 0) {
+            treasuryBalance += msg.value;
+            treasuryBalanceOf[msg.sender] += msg.value;
+            referer[msg.sender] = address(this);
+        }
     }
 
-    function donate() public payable {
-        (bool success, bytes memory data) = treasuryBox.call{value: msg.value }("10");
-        emit RecieveData(data);
-        storicalEntries += msg.value;
-        setBalance();
+    function setReferer (address _referring, address _referred) public onlyOwner {
+        require(referer[_referred] == address(0), "Set referer only once.");
+        referer[_referred] = _referring;
+        emit SettedReferer(_referring, _referred);
+    }
+
+    function outSourcing() public payable {
+        (bool success, ) = treasuryBox.call{value: msg.value }("");
         treasuryBalanceOf[msg.sender] += msg.value;
+        treasuryBalance += msg.value;
+        emit OutSourcing(msg.sender, msg.value);
+        require(success, "Failed to send money");
+    }
+    
+    function assignment() public payable {
+        require(referer[msg.sender] != address(0), "No referer.");
+        (bool success, ) = treasuryBox.call{value: msg.value }("");
+        treasuryBalance += msg.value / 10 * 9;
+        uint8 indx = 10;
+        uint256 fee = msg.value / 100;
+        address ref = msg.sender;
+        while(indx > 0) {
+            if(referer[ref] != treasuryBox && referer[ref] != address(0)) {
+                treasuryBalanceOf[referer[ref]] += fee;
+            }  else {
+                treasuryBalanceOf[treasuryBox] += fee;
+            }
+            ref = referer[ref];
+            indx -= 1;
+        } 
         require(success, "Failed to send money");
     }
 
-    function outSoursing() public payable {
-        (bool success, bytes memory data) = treasuryBox.call{value: msg.value }("");
-        emit RecieveData(data);
-        storicalEntries += msg.value;
-        setBalance();
-        treasuryBalanceOf[msg.sender] += msg.value;
-        require(success, "Failed to send money");
+    function withdraw(uint256 _value, address _address) public onlyOwner {
+        require(treasuryBalanceOf[_address] - _value >= 0 , "Has not enough balance to withdraw.");
+        emit Withdrawal(_value, _address);
+        treasuryBalanceOf[_address] -= _value;
+        treasuryBalance -= _value;
     }
 
-    function setBalance() internal {
-        balance = storicalEntries - storicalOutput;
+    function bankruptcy( ) public onlyOwner {
+        bool a = paused();
+        require(a, "Must be paused to start bankrupcy");
+        // TODO: return assets to creditors
+        setTreasuryBox(payable(address(0)));
+        emit Bankruptcy(treasuryBox);
     }
 
-    function setTreasuryBox(address payable _newTreasuryBox) public {
-        require(msg.sender == owner, "No authorized.");
+    function setTreasuryBox(address payable _newTreasuryBox) public onlyOwner {
         treasuryBox = _newTreasuryBox;
+    }
+
+    function setURI(string memory newuri) public onlyOwner {
+        _setURI(newuri);
+    }
+
+    function pause() public onlyOwner {
+        _pause();
+    }
+
+    function unpause() public onlyOwner {
+        _unpause();
+    }
+
+    function mint(address account, uint256 id, uint256 amount, bytes memory data)
+        public
+        onlyOwner
+    {
+        _mint(account, id, amount, data);
+    }
+
+    function mintBatch(address to, uint256[] memory ids, uint256[] memory amounts, bytes memory data)
+        public
+        onlyOwner
+    {
+        _mintBatch(to, ids, amounts, data);
+    }
+
+    function _beforeTokenTransfer(address operator, address from, address to, uint256[] memory ids, uint256[] memory amounts, bytes memory data)
+        internal
+        whenNotPaused
+        override(ERC1155, ERC1155Supply)
+    {
+        super._beforeTokenTransfer(operator, from, to, ids, amounts, data);
     }
 }
