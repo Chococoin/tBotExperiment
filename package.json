@@ -21,7 +21,7 @@
   },
   "dependencies": {
     "@openzeppelin/cli": "^2.8.2",
-    "@openzeppelin/contracts": "^4.5.0",
+    "@openzeppelin/contracts": "^4.6.0",
     "@sendgrid/mail": "^7.2.4",
     "@truffle/hdwallet-provider": "^1.0.42",
     "@what3words/api": "4.0.6",
