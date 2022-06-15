@@ -14,21 +14,33 @@ contract Treasury is ERC1155, Ownable, Pausable, ERC1155Burnable, ERC1155Supply 
 
     mapping ( address => uint256 ) public treasuryBalanceOf;
     mapping ( address => address ) public referer;
+    uint public refererRegister;
+
     address payable public treasuryBox;
 
     event SentFee(bytes _data);
     event Withdrawal(uint256 _value, address _address);
     event SettedReferer(address _refered, address _refering);
     event OutSourcing(address _sender, uint256 _value);
+    event Assignment(address _sender, uint256 _value);
     event Bankruptcy(address _newOwner);
 
     constructor() payable ERC1155("") {
         treasuryBox = payable(msg.sender);
+        referer[msg.sender] = address(this);
         if (msg.value > 0) {
             treasuryBalance += msg.value;
             treasuryBalanceOf[msg.sender] += msg.value;
-            referer[msg.sender] = address(this);
         }
+    }
+
+    function getBalance() public view returns(uint) {
+        return address(this).balance;
+    }
+
+    function withdrawMoney() public onlyOwner {
+        address payable to = payable(msg.sender);
+        to.transfer(getBalance());
     }
 
     function setReferer (address _referring, address _referred) public onlyOwner {
@@ -48,7 +60,7 @@ contract Treasury is ERC1155, Ownable, Pausable, ERC1155Burnable, ERC1155Supply 
     function assignment() public payable {
         require(referer[msg.sender] != address(0), "No referer.");
         (bool success, ) = treasuryBox.call{value: msg.value }("");
-        treasuryBalance += msg.value / 10 * 9;
+        treasuryBalance += (msg.value / 10 * 9);
         uint8 indx = 10;
         uint256 fee = msg.value / 100;
         address ref = msg.sender;
@@ -60,15 +72,16 @@ contract Treasury is ERC1155, Ownable, Pausable, ERC1155Burnable, ERC1155Supply 
             }
             ref = referer[ref];
             indx -= 1;
-        } 
+        }
+        emit Assignment(msg.sender, msg.value);
         require(success, "Failed to send money");
     }
 
-    function withdraw(uint256 _value, address _address) public onlyOwner {
+    function withdrawFrom(uint256 _value, address _address) public onlyOwner {
         require(treasuryBalanceOf[_address] - _value >= 0 , "Has not enough balance to withdraw.");
-        emit Withdrawal(_value, _address);
         treasuryBalanceOf[_address] -= _value;
         treasuryBalance -= _value;
+        emit Withdrawal(_value, _address);
     }
 
     function bankruptcy( ) public onlyOwner {
