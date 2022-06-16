@@ -111,7 +111,8 @@ class Minty {
         // make the NFT metadata JSON
         const assetURI = ensureIpfsUriPrefix(assetCid) + '/' + basename
         const metadata = await this.makeNFTMetadata(assetURI, options)
-
+        console.log("METADATA", metadata)
+        console.log("OPTIONS", )
         // add the metadata to IPFS
         const { cid: metadataCid } = await this.ipfs.add({ path: '/nft/metadata.json', content: JSON.stringify(metadata)}, ipfsAddOptions)
         const metadataURI = ensureIpfsUriPrefix(metadataCid) + '/metadata.json'
@@ -163,12 +164,22 @@ class Minty {
      * @returns {object} - NFT metadata object
      */
     async makeNFTMetadata(assetURI, options) {
-        const {name, description} = options;
+        const { name, description, caption, geoposition } = options;
         assetURI = ensureIpfsUriPrefix(assetURI)
-        return {
-            name,
-            description,
-            image: assetURI
+        if (geoposition) {
+            return {
+                geoposition,
+                name,
+                description,
+                image: assetURI,
+                caption
+            }
+        } else {
+            return {
+                name,
+                description,
+                image: assetURI
+            }
         }
     }
 

@@ -34,6 +34,17 @@ async function main() {
             'If not provided, defaults to the first signing address.')
         .action(createNFT)
 
+    program
+        .command('mintNFTtree <image-path>')
+        .description('create a new NFTtree from an image file')
+        .option('-n, --name <name>', 'The name of the NFT')
+        .option('-g, --geoposition <geoposition>', 'Three words geo position.')
+        .option('-c, --caption <capt>', 'Caption of NFT tree.')
+        .option('-d, --description <desc>', 'A description of the NFT')
+        .option('-o, --owner <address>', 'The ethereum address that should own the NFT.' +
+            'If not provided, defaults to the first signing address.')
+        .action(createNFTtree)
+
     program.command('show <token-id>')
         .description('get info about an NFT using its token ID')
         .option('-c, --creation-info', 'include the creator address and block number the NFT was minted')
@@ -51,8 +62,8 @@ async function main() {
     program.command('deploy')
         .description('deploy an instance of the Minty NFT contract')
         .option('-o, --output <deploy-file-path>', 'Path to write deployment info to', config.deploymentConfigFile || 'minty-deployment.json')
-        .option('-n, --name <name>', 'The name of the token contract', 'Julep')
-        .option('-s, --symbol <symbol>', 'A short symbol for the tokens in this contract', 'JLP')
+        .option('-n, --name <name>', 'The name of the token contract', 'ChocoSpace')
+        .option('-s, --symbol <symbol>', 'A short symbol for the tokens in this contract', 'CHSP')
         .action(deploy)
 
 
@@ -84,6 +95,39 @@ async function createNFT(imagePath, options) {
     const nft = await minty.createNFTFromAssetFile(imagePath, answers)
     // console.log('🌿 Minted a new NFT: ')
 
+    alignOutput([
+        ['Token ID:', chalk.green(nft.tokenId)],
+        ['Metadata Address:', chalk.blue(nft.metadataURI)],
+        ['Metadata Gateway URL:', chalk.blue(nft.metadataGatewayURL)],
+        ['Asset Address:', chalk.blue(nft.assetURI)],
+        ['Asset Gateway URL:', chalk.blue(nft.assetGatewayURL)],
+    ])
+    console.log('BIG OBJECT')
+    console.log(JSON.stringify(nft))
+}
+
+async function createNFTtree(imagePath, options) {
+    const minty = await MakeMinty()
+
+    // prompt for missing details if not provided as cli args
+    const answers = await promptForMissing(options, {
+        name: {
+            message: 'Enter a name for your new NFT: '
+        },
+        description: {
+            message: 'Enter a description for your new NFT: '
+        },
+        geoposition: {
+            message: 'Enter the three word phrase to localizate the NFT: '
+        },
+        caption: {
+            message: 'Enter a brief about your image.'
+        }
+    })
+
+    const nft = await minty.createNFTFromAssetFile(imagePath, answers)
+    console.log('🌿 Minted a new NFT: ')
+    console.log(nft)
     alignOutput([
         ['Token ID:', chalk.green(nft.tokenId)],
         ['Metadata Address:', chalk.blue(nft.metadataURI)],
