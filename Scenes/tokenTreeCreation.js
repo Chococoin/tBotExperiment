@@ -96,6 +96,7 @@ step3.on('location', async (ctx) => {
 
 // A reminder
 step3.on('message', (ctx) => {
+  console.log("MESSAGE: ", ctx)
   ctx.reply('2) Send the location of your deed')
 })
 
@@ -129,7 +130,8 @@ step5.on('message', async (ctx) => {
   if (typeof ctx.update.message.text === (typeof 'String')) { 
     description = ctx.update.message.text
     try {
-      const NFTdata = await shell.exec(`minty mintNFTtree ${ imagePath } --name "${ title }" --description "${ description }" --geoposition "${ deedData.words }" --caption "${ caption }"`)
+      const NFTdata = await shell.exec(`minty mintNFTtree ${ imagePath } --name "${ title }" --description "${ description }" --geoposition "${ geoposition }" --caption "${ caption }"`)
+      console.log(NFTdata)
       if ( NFTdata.length === 0 ) {
         ctx.reply("Sorry, I'm having a problem with a bridge at this time.")
         return ctx.scene.leave()
