@@ -13,7 +13,7 @@ if [ ! -d "$HOME/.ipfs" ]; then
 fi
 
 echo "Running IPFS and development blockchain"
-run_eth_cmd="ganache-cli --mnemonic '$MNEMONIC'"
+run_eth_cmd="ganache-cli --mnemonic '$MNEMONIC' -a 15"
 run_ipfs_cmd="npx go-ipfs daemon"
 
 npx concurrently -n eth,ipfs -c yellow,blue "$run_eth_cmd" "$run_ipfs_cmd"
