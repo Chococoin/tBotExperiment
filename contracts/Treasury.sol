@@ -14,6 +14,7 @@ contract Treasury is ERC1155, Ownable, Pausable, ERC1155Burnable, ERC1155Supply 
 
     mapping ( address => uint256 ) public treasuryBalanceOf;
     mapping ( address => address ) public referer;
+    uint public treasuryCoinPrice;
     uint public refererRegister;
 
     address payable public treasuryBox;
@@ -28,10 +29,11 @@ contract Treasury is ERC1155, Ownable, Pausable, ERC1155Burnable, ERC1155Supply 
     constructor() payable ERC1155("") {
         treasuryBox = payable(msg.sender);
         referer[msg.sender] = address(this);
-        if (msg.value > 0) {
-            treasuryBalance += msg.value;
-            treasuryBalanceOf[msg.sender] += msg.value;
-        }
+        treasuryCoinPrice = 1;
+    }
+
+    function setTreasuryPrice (uint _polygonPrice) public onlyOwner {
+        treasuryCoinPrice = _polygonPrice;
     }
 
     function getBalance() public view returns(uint) {
@@ -51,18 +53,18 @@ contract Treasury is ERC1155, Ownable, Pausable, ERC1155Burnable, ERC1155Supply 
 
     function outSourcing() public payable {
         (bool success, ) = treasuryBox.call{value: msg.value }("");
-        treasuryBalanceOf[msg.sender] += msg.value;
+        treasuryBalanceOf[msg.sender] += msg.value * treasuryCoinPrice;
         treasuryBalance += msg.value;
-        emit OutSourcing(msg.sender, msg.value);
+        emit OutSourcing(msg.sender, msg.value * treasuryCoinPrice);
         require(success, "Failed to send money");
     }
     
     function assignment() public payable {
         require(referer[msg.sender] != address(0), "No referer.");
         (bool success, ) = treasuryBox.call{value: msg.value }("");
-        treasuryBalance += (msg.value / 10 * 9);
+        treasuryBalance += (msg.value / 10 * 9) * treasuryCoinPrice;
         uint8 indx = 10;
-        uint256 fee = msg.value / 100;
+        uint256 fee = (msg.value / 100) * treasuryCoinPrice;
         address ref = msg.sender;
         while(indx > 0) {
             if(referer[ref] != treasuryBox && referer[ref] != address(0)) {
@@ -87,7 +89,7 @@ contract Treasury is ERC1155, Ownable, Pausable, ERC1155Burnable, ERC1155Supply 
     function bankruptcy( ) public onlyOwner {
         bool a = paused();
         require(a, "Must be paused to start bankrupcy");
-        // TODO: return assets to creditors
+        // TODO: return assets to creditors;
         setTreasuryBox(payable(address(0)));
         emit Bankruptcy(treasuryBox);
     }
