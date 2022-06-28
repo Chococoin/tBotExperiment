@@ -70,7 +70,7 @@ module.exports = {
     mumbai: {
       provider: () => new HDWalletProvider( mnemonic, `https://polygon-mumbai.infura.io/v3/${infuraApiKey}` ),
       network_id: 80001,
-      gas: 19862610,
+      gas: 18806140,
       gasPrice: 50000000000,
       confirmations: 2,
       skipDryRun: true,
