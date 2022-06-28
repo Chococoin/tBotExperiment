@@ -3,16 +3,17 @@ const User = require('../Schemas/User.js')
 const QRCode = require('qrcode')
 const imageDataURI = require('image-data-uri')
 
-// const Contract = require('../utils/web4u.js')
+const { Contract, web3 } = require('../utils/web4u.js')
 
 const fs = require('fs')
 
 /*  ===== GASBALANCE ===== */
 
-let balance = 0
+let balance
+let interval
+let _gasBalance
 /* Implement balance gas. */ 
 const gasBalance1 = async (ctx) => {
-  const Contract = require('../utils/web4u.js')
   let user
   try {
     user = await User.findOne({ telegramID: ctx.update.callback_query.from.id })
@@ -27,13 +28,17 @@ const gasBalance1 = async (ctx) => {
     return ctx.scene.leave()
   } else {
     try {
-      balance = await Contract.treasuryBalanceOf(user.address).call()
-      ctx.reply(`${ user.username || 'Dear customer' }, you have ${ balance } as balance of gas in your account`)
-      return ctx.scene.leave()
+      _gasBalance = await web3.eth.getBalance(user.address)
+      _gasBalance = _gasBalance / 10**18
     } catch ( error ) {
       console.log(error)
       ctx.reply(`Error: ${error}`)
     }
+  }
+  if ( _gasBalance >= 0.000001 ) {
+    ctx.reply(`${ user.username || 'Dear customer' }, you have ${ _gasBalance } as balance of gas in your account`)
+  } else {
+    ctx.reply(`${ user.username || 'Dear customer' }, you have only dust as balance of gas in your account`)
   }
   return ctx.scene.leave()
 }
@@ -46,38 +51,71 @@ const gasBalance = new Scenes.WizardScene('gasBalance',
 const gasLoad1 = async (ctx) => {
   let user = await User.findOne({ telegramID: ctx.update.callback_query.from.id })
   if ( user && user.verifiedPhone && user.verifiedEmail) {
-    QRCode.toDataURL(`${user.address}`, { errorCorrectionLevel: 'H' }, async function (err, url) {
+    try {
+      // TODO: Don't use treasuryBalance but eth balance.
+      // _gasBalance = await Contract.treasuryBalanceOf(user.address).call()
+      _gasBalance = await web3.eth.getBalance(user.address)
+      console.log("KJASKJDKJDgkda", _gasBalance)
+    } catch ( error ) {
+      console.log(error)
+      ctx.reply(`Error: ${ error }`)
+      return ctx.scene.leave()
+    }
+    QRCode.toDataURL(`${ user.address }`, { errorCorrectionLevel: 'H' }, async function (err, url) {
       if (err) {
         ctx.reply("Some trouble is happening.")
         console.log("Some trouble is happening.")
       } else {
         let img = await imageDataURI.outputFile(url, 'decoded-image.png')
         ctx.replyWithPhoto({ source: fs.createReadStream(img) })
-        ctx.reply("Charge your profile with cryptos using metamask.")
+        ctx.reply(`Charge your profile with cryptos using metamask.\nCurrently your balance is ${ _gasBalance }.\nWaiting for a payment click /cancel to stop process`)
       }
     })
+
   }
-  return ctx.wizard.next()
+
+  let secs = 0
+
+  interval = setInterval( async () => {
+    if ( secs > 60) {
+      clearInterval(interval)
+      ctx.reply("You have overmatch 60 seconds to make the deposit.\nTry again")
+      return ctx.scene.leave()
+    }
+    let newGasBalance  = await web3.eth.getBalance(user.address)
+    // ctx.reply(`Seg: ${ secs }, Balance: ${ _gasBalance }, NewBalance: ${ newGasBalance } `)
+    if ( parseInt(newGasBalance) > parseInt(_gasBalance)) {
+      ctx.reply(`You have received ${ parseInt(newGasBalance) - parseInt(_gasBalance) } of gas`)
+      clearInterval(interval)
+      return ctx.wizard.next()
+    }
+    secs++
+    console.log(secs)
+  }, 1000)
 }
 
-const gasLoad2 = new Composer()
+// const gasLoad2 = new Composer()
 
-gasLoad2.on('load', async (ctx) => {
-  // TODO: Give address to load with Polygon coins.
-  ctx.reply(`You have a balance of gas ${balance}`)
-  if ( balance > 0 ) ctx.reply("You may execute some actions. ")
-  // const currentStepIndex = ctx.wizard.cursor
-  // return ctx.wizard.selectStep(currentStepIndex)
-});
-
-gasLoad2.command('cancel', (ctx) => {
-  ctx.reply('Bye bye')
+const gasLoad2 = async (ctx) => {
+  ctx.reply("Gas load 2")
   return ctx.scene.leave()
-})
+}
+
+// gasLoad2.on('message', async (ctx) => {
+//   ctx.reply(`You have a balance of gas ${ balance }`)
+//   if ( balance > 0 ) ctx.reply("You may execute some actions. ")
+//   // const currentStepIndex = ctx.wizard.cursor
+//   // return ctx.wizard.selectStep(currentStepIndex)
+// });
+
+// gasLoad2.command('cancel', (ctx) => {
+//   clearInterval(interval)
+//   ctx.reply('Bye bye')
+//   return ctx.scene.leave()
+// })
 
 const gasLoad = new Scenes.WizardScene('gasLoad',
-  (ctx) => gasLoad1(ctx),
-  gasLoad2,
+  (ctx) => gasLoad1(ctx), (ctx) => gasLoad2(ctx)
 )
 /**  ===== GASCOLLECTOR ===== */
 
