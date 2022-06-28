@@ -28,8 +28,7 @@ const gasBalance1 = async (ctx) => {
     return ctx.scene.leave()
   } else {
     try {
-      _gasBalance = await web3.eth.getBalance(user.address)
-      _gasBalance = _gasBalance / 10**18
+      _gasBalance = await web3.eth.getBalance(user.address) / 10**18
     } catch ( error ) {
       console.log(error)
       ctx.reply(`Error: ${error}`)
@@ -52,10 +51,7 @@ const gasLoad1 = async (ctx) => {
   let user = await User.findOne({ telegramID: ctx.update.callback_query.from.id })
   if ( user && user.verifiedPhone && user.verifiedEmail) {
     try {
-      // TODO: Don't use treasuryBalance but eth balance.
-      // _gasBalance = await Contract.treasuryBalanceOf(user.address).call()
-      _gasBalance = await web3.eth.getBalance(user.address)
-      console.log("KJASKJDKJDgkda", _gasBalance)
+      _gasBalance = await web3.eth.getBalance(user.address) / 10**18
     } catch ( error ) {
       console.log(error)
       ctx.reply(`Error: ${ error }`)
@@ -68,7 +64,7 @@ const gasLoad1 = async (ctx) => {
       } else {
         let img = await imageDataURI.outputFile(url, 'decoded-image.png')
         ctx.replyWithPhoto({ source: fs.createReadStream(img) })
-        ctx.reply(`Charge your profile with cryptos using metamask.\nCurrently your balance is ${ _gasBalance }.\nWaiting for a payment click /cancel to stop process`)
+        ctx.reply(`Charge your profile with cryptos using metamask.\nCurrently your balance is ${ _gasBalance.toFixed(5) }.\nWaiting for a payment click /cancel to stop process`)
       }
     })
 
@@ -82,10 +78,9 @@ const gasLoad1 = async (ctx) => {
       ctx.reply("You have overmatch 60 seconds to make the deposit.\nTry again")
       return ctx.scene.leave()
     }
-    let newGasBalance  = await web3.eth.getBalance(user.address)
-    // ctx.reply(`Seg: ${ secs }, Balance: ${ _gasBalance }, NewBalance: ${ newGasBalance } `)
-    if ( parseInt(newGasBalance) > parseInt(_gasBalance)) {
-      ctx.reply(`You have received ${ parseInt(newGasBalance) - parseInt(_gasBalance) } of gas`)
+    let newGasBalance  = await web3.eth.getBalance(user.address) / 10**18
+    if ( newGasBalance > _gasBalance ) {
+      ctx.reply(`You have received ${ (newGasBalance - _gasBalance).toFixed(5) } of gas`)
       clearInterval(interval)
       return ctx.wizard.next()
     }
