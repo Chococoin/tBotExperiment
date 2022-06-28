@@ -80,7 +80,7 @@ const gasLoad1 = async (ctx) => {
     }
     let newGasBalance  = await web3.eth.getBalance(user.address) / 10**18
     if ( newGasBalance > _gasBalance ) {
-      ctx.reply(`You have received ${ (newGasBalance - _gasBalance).toFixed(5) } of gas`)
+      ctx.reply(`You have received ${ (newGasBalance - _gasBalance).toFixed(5) } of gas.\nYou now can `)
       clearInterval(interval)
       return ctx.wizard.next()
     }
@@ -89,28 +89,8 @@ const gasLoad1 = async (ctx) => {
   }, 1000)
 }
 
-// const gasLoad2 = new Composer()
-
-const gasLoad2 = async (ctx) => {
-  ctx.reply("Gas load 2")
-  return ctx.scene.leave()
-}
-
-// gasLoad2.on('message', async (ctx) => {
-//   ctx.reply(`You have a balance of gas ${ balance }`)
-//   if ( balance > 0 ) ctx.reply("You may execute some actions. ")
-//   // const currentStepIndex = ctx.wizard.cursor
-//   // return ctx.wizard.selectStep(currentStepIndex)
-// });
-
-// gasLoad2.command('cancel', (ctx) => {
-//   clearInterval(interval)
-//   ctx.reply('Bye bye')
-//   return ctx.scene.leave()
-// })
-
 const gasLoad = new Scenes.WizardScene('gasLoad',
-  (ctx) => gasLoad1(ctx), (ctx) => gasLoad2(ctx)
+  (ctx) => gasLoad1(ctx)
 )
 /**  ===== GASCOLLECTOR ===== */
 
