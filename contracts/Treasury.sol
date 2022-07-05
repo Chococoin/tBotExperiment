@@ -11,13 +11,14 @@ import { ERC1155Supply } from "@openzeppelin/contracts/token/ERC1155/extensions/
 contract Treasury is ERC1155, Ownable, Pausable, ERC1155Burnable, ERC1155Supply {
 
     uint public treasuryBalance;
+    address payable public treasuryBox;
 
     mapping ( address => uint256 ) public treasuryBalanceOf;
     mapping ( address => address ) public referer;
     uint public treasuryCoinPrice;
     uint public refererRegister;
 
-    address payable public treasuryBox;
+    uint constant multiplier = 10**18;
 
     event SentFee(bytes _data);
     event Withdrawal(uint256 _value, address _address);
@@ -29,10 +30,10 @@ contract Treasury is ERC1155, Ownable, Pausable, ERC1155Burnable, ERC1155Supply 
     constructor() payable ERC1155("") {
         treasuryBox = payable(msg.sender);
         referer[msg.sender] = address(this);
-        treasuryCoinPrice = 1;
+        treasuryCoinPrice = multiplier;
     }
 
-    function setTreasuryPrice (uint _polygonPrice) public onlyOwner {
+    function setTreasuryEuroPrice (uint _polygonPrice) public onlyOwner {
         treasuryCoinPrice = _polygonPrice;
     }
 
@@ -52,25 +53,26 @@ contract Treasury is ERC1155, Ownable, Pausable, ERC1155Burnable, ERC1155Supply 
     }
 
     function outSourcing() public payable {
+        require(msg.value >= 10 ** 18, "Value must be greader or equal than a crypto Unit.");
         (bool success, ) = treasuryBox.call{value: msg.value }("");
-        treasuryBalanceOf[msg.sender] += msg.value * treasuryCoinPrice;
-        treasuryBalance += msg.value;
-        emit OutSourcing(msg.sender, msg.value * treasuryCoinPrice);
+        treasuryBalanceOf[msg.sender] += msg.value * treasuryCoinPrice / multiplier ;
+        treasuryBalance += msg.value * treasuryCoinPrice / multiplier;
+        emit OutSourcing(msg.sender, msg.value * treasuryCoinPrice / multiplier );
         require(success, "Failed to send money");
     }
     
     function assignment() public payable {
-        require(referer[msg.sender] != address(0), "No referer.");
+        require(referer[msg.sender] != address(0), "Sender need a referer.");
+        require(msg.value >= 10 ** 18, "Value must be greader or equal than a crypto Unit.");
         (bool success, ) = treasuryBox.call{value: msg.value }("");
-        treasuryBalance += (msg.value / 10 * 9) * treasuryCoinPrice;
+        treasuryBalance += msg.value * treasuryCoinPrice / multiplier / 90;
         uint8 indx = 10;
-        uint256 fee = (msg.value / 100) * treasuryCoinPrice;
+        uint256 fee = msg.value * treasuryCoinPrice / multiplier / 100;
         address ref = msg.sender;
         while(indx > 0) {
-            if(referer[ref] != treasuryBox && referer[ref] != address(0)) {
+            if(referer[ref] != address(0)) {
                 treasuryBalanceOf[referer[ref]] += fee;
-            }  else {
-                treasuryBalanceOf[treasuryBox] += fee;
+                treasuryBalance += fee;
             }
             ref = referer[ref];
             indx -= 1;
