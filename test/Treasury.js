@@ -134,14 +134,14 @@ contract("Treasury", (accounts) => {
     it("Should assert if pauses changes correctly", async () => {
       await TreasuryInstance.pause({ from: accounts[0] })
       const isPaused = await TreasuryInstance.paused()
-      
+
       assert.equal(isPaused, true, "Owner changes properly.")
     })
 
     it("Should assert if pauses revert correctly", async () => {
       await TreasuryInstance.unpause({ from: accounts[0] })
       const isNotPaused = await TreasuryInstance.paused()
-      
+
       assert.equal(isNotPaused, false, "Owner revert properly.")
     })
 
@@ -167,6 +167,45 @@ contract("Treasury", (accounts) => {
       const owner = await TreasuryInstance.owner()
 
       assert.equal(accounts[1], owner, "Owner changes properly.")
+    })
+
+    it("Should assert if outSourcing exchange properly.", async () => {
+      const balance_1 = await TreasuryInstance.treasuryBalanceOf(accounts[10])
+      // console.log("Balance 1:")
+      // console.log(web3.utils.fromWei(balance_1, 'ether'))
+
+      const amount = web3.utils.toBN('3303000000000000000')
+      // console.log("Ether", web3.utils.fromWei(amount, 'ether'))
+      // console.log(web3.utils.fromWei(amount, 'wei'))
+
+      const tx = await TreasuryInstance.outSourcing({ from: accounts[10], value: amount })
+      const treasuryCoinPrice = await TreasuryInstance.treasuryCoinPrice()
+      // console.log(web3.utils.fromWei(treasuryCoinPrice, 'ether'))
+      
+      // console.log("TOTAL EXCHANGED")
+      let totalExchanged = treasuryCoinPrice.mul(amount).div(web3.utils.toBN(10).pow(web3.utils.toBN(18)))
+      // totalExchanged = totalExchanged
+      // console.log(web3.utils.fromWei(totalExchanged, 'wei'))
+
+      const balance_2 = await TreasuryInstance.treasuryBalanceOf(accounts[10])
+      // console.log("Balance 2:")
+      // console.log(web3.utils.fromWei(balance_2))
+
+      assert.equal(web3.utils.fromWei(balance_2.sub(balance_1), 'wei'), web3.utils.fromWei(totalExchanged, 'wei'), "Owner changes properly.")
+    })
+
+    it("Should assert if outSourcing charge properly.", async () => {
+      const balance_1 = await web3.eth.getBalance(accounts[10])
+      const amount = web3.utils.toBN('10000000000000000000')
+      // const gasEstimated = await TreasuryInstance.outSourcing.estimateGas({ from: accounts[10], value: amount })
+      const tx = await TreasuryInstance.outSourcing({ from: accounts[10], value: amount })
+      
+      const gasPrice = new web3.utils.BN(tx.receipt.effectiveGasPrice)
+      const gasUsed = new web3.utils.BN(tx.receipt.gasUsed)
+      const totalExpense = balance_1.sub(gasPrice.mul(gasUsed).add(amount))
+
+
+      assert.equal(balance_1, totalExpense.split("<sub>")[1].split("</sub>")[0], "Owner changes properly.")
     })
   })
 })
