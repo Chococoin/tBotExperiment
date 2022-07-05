@@ -7,14 +7,15 @@ const fs = require('fs')
 const Web3 = require('web3')
 const Units = require('ethereumjs-units')
 const Mail = require('@sendgrid/mail')
-const HDWalletProvider = require('@truffle/hdwallet-provider')
 const bip39 = require('bip39')
 
 const tokenCreation = require('./Scenes/tokenCreation')
+const tokenTreeCreation = require('./Scenes/tokenTreeCreation')
 const noteUser = require('./utils/noteUser').noteUser
 const userRegister = require('./Scenes/userRegister').userRegister
 const userVerification = require('./Scenes/userVerification').userVerification
-const { gasLoad, gasBalance, gasCollector, gasInvest } = require('./Scenes/gas')
+const { gasLoad, gasBalance, gasExchange, gasCollector, gasInvest } = require('./Scenes/gas')
+const { treasuryBalance } = require('./Scenes/treasury')
 const dbCount = require('./utils/dbCount')
 const createLink = require('./utils/createLink')
 
@@ -26,29 +27,39 @@ db()
   .catch( err => console.log(`Mongo database not connected ${err}`) )
 
 async function db() {
-  await mongoose.connect(process.env.MONGODB_URL || 'mondodb://127.0.0.1:27017/tBot')
+  await mongoose.connect(process.env.MONGODB_URL1 || 'mongodb://127.0.0.1:27017/tBot')
 }
 
 const telegramApiKey = fs.readFileSync(".telegramApiKey").toString().trim()
 
-const mnemonic = fs.readFileSync(".secret").toString().trim()
-const infuraApi = fs.readFileSync(".infuraApiKey").toString().trim()
+// const mnemonic = fs.readFileSync(".secret").toString().trim()
+// const infuraApi = fs.readFileSync(".infuraApiKey").toString().trim()
 
-const abi = require('./build/contracts/SuperJuicyToken.json').abi // TODO: use new contract
-const contractAddress = require('./build/contracts/SuperJuicyToken.json').networks[5].address
+// const abi = require('./build/contracts/SuperJuicyToken.json').abi // TODO: use new contract
+// const contractAddress = require('./build/contracts/SuperJuicyToken.json').networks[5].address
 
-const provider = new HDWalletProvider(mnemonic, `https://goerli.infura.io/v3/${infuraApi}`) // Use Avalanche
-const sender = provider.addresses[0]
-const web3 = new Web3(provider)
+// const provider = new HDWalletProvider(mnemonic, `https://goerli.infura.io/v3/${infuraApi}`) // Use Avalanche
+// const sender = provider.addresses[0]
+// const web3 = new Web3(provider)
 
-const contract = new web3.eth.Contract(abi, contractAddress, { gasPrice: '2000000000', from: sender })
+// const contract = new web3.eth.Contract(abi, contractAddress, { gasPrice: '2000000000', from: sender })
 
 // async function define name Token
-let tokenName = contract.methods.readName().call().then(console.log).catch(console.log)
-let tokenSupply = contract.methods.readSupply().call().then(console.log).catch(console.log)
+// let tokenName = contract.methods.readName().call().then(console.log).catch(console.log)
+// let tokenSupply = contract.methods.readSupply().call().then(console.log).catch(console.log)
 
 const app = new Telegraf(telegramApiKey)
-const stage = new Scenes.Stage([ userRegister, tokenCreation, gasBalance, gasLoad, userVerification ])
+const stage = new Scenes.Stage(
+  [ userRegister, 
+    tokenCreation,
+    tokenTreeCreation,
+    gasBalance,
+    gasLoad,
+    gasExchange,
+    userVerification,
+    treasuryBalance
+  ]
+)
 app.use(session())
 app.use(stage.middleware())
 
@@ -63,6 +74,10 @@ app.telegram.setMyCommands(
       description : 'Load gas and show gas balance'
     },
     {
+      command     : '/treasury_balance',
+      description : 'Treasury Balance'
+    },
+    {
       command     : '/create_a_character',
       description : 'Create a new character'
     },
@@ -73,6 +88,10 @@ app.telegram.setMyCommands(
     {
       command     : '/nft_creation',
       description : '⭐ Create an NFT ⭐'
+    },
+    {
+      command     : '/nft_tree_creation',
+      description : '🌳 Create an NFT-TREE 🌳'
     },
     {
       command     : '/help',
@@ -152,11 +171,21 @@ app.command('nft_creation', (ctx) => {
   ctx.reply(message, options)
 })
 
+app.command('nft_tree_creation', (ctx) => {
+  let userFirstName = ctx.message.from.first_name
+  let message = `Hello ${userFirstName}, ready to create an NFT-TREE 🌳?`
+  let options = Markup.inlineKeyboard([
+    Markup.button.callback('Create an NFT-TREE 🌳', 'token_tree_creation'),
+  ])
+  ctx.reply(message, options)
+})
+
 app.command('account', (ctx) => {
-  let message = `Charge your profile whit gas to pay transaction as NTF creation\nthen click the button bellow`
+  let message = `Charge your profile with gas to pay transaction as NTF creation\nthen click the button bellow`
   let options = Markup.inlineKeyboard([
     Markup.button.callback('Gas Balance', 'gas_balance'),
     Markup.button.callback('Gas Load', 'gas_load'),
+    Markup.button.callback('Gas Exchange', 'gas_exchange'),
   ])
   ctx.reply(message, options)
 })
@@ -170,7 +199,7 @@ app.command('verification', (ctx) => {
 })
 
 app.command('register', (ctx) => {
-  let message = `Register using a phone and an email.`
+  let message = `Register using phone number and email address.`
   let options = Markup.inlineKeyboard([
     Markup.button.callback('User Registration', 'user_register'),
   ])
@@ -193,6 +222,14 @@ app.command('asklink', async ctx => {
   } else {
     ctx.reply('A no registered user can\'t apply for a referrer link.')
   }
+})
+
+app.command('treasury_balance', async ctx => {
+  let message = 'Check your Treasury total balance'
+  let options = Markup.inlineKeyboard([
+    Markup.button.callback('Treasury Personal Balance', 'treasury_personal_balance'),
+  ])
+  ctx.reply(message, options)
 })
 
 // TODO: Review commands
@@ -258,12 +295,15 @@ app.on('chat_join_request', async (ctx) => {
 })
 
 // User Actions
-app.action('user_register',     Scenes.Stage.enter('userRegister'))
-app.action('user_verification', Scenes.Stage.enter('userVerification'))
-app.action('token_creation',    Scenes.Stage.enter('tokenCreation'))
-app.action('gas_balance',       Scenes.Stage.enter('gasBalance'))
-app.action('gas_load',          Scenes.Stage.enter('gasLoad'))
-app.action('gas_collector',     Scenes.Stage.enter('gasCollector'))
-app.action('gas_invest',        Scenes.Stage.enter('gasInvest'))
+app.action('user_register',      Scenes.Stage.enter('userRegister'))
+app.action('user_verification',  Scenes.Stage.enter('userVerification'))
+app.action('token_creation',     Scenes.Stage.enter('tokenCreation'))
+app.action('token_tree_creation', Scenes.Stage.enter('tokenTreeCreation'))
+app.action('gas_balance',        Scenes.Stage.enter('gasBalance'))
+app.action('gas_load',           Scenes.Stage.enter('gasLoad'))
+app.action('gas_collector',      Scenes.Stage.enter('gasCollector'))
+app.action('gas_invest',         Scenes.Stage.enter('gasInvest'))
+app.action('gas_exchange',       Scenes.Stage.enter('gasExchange'))
+app.action('treasury_personal_balance', Scenes.Stage.enter('treasuryBalance'))
 
 app.startPolling()
