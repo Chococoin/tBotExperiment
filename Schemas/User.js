@@ -22,7 +22,7 @@ const UserSchema = new Schema({
   passphrase: { type: Array, default: () => bip39.generateMnemonic()},
   address: { type: String, default: 'none'},
   link: { type: String, required: false, default: "broken_link" },
-  isFarmer: { type: Boolean, required: true, default: false }
+  isFarmer: { type: Boolean, required: true, default: false },
 });
 
 module.exports = model('User', UserSchema)
