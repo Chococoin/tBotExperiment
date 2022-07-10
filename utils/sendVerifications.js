@@ -38,4 +38,33 @@ async function sendVerifications (mail, phone, username) {
     .catch((error) => {console.error(error)})
 }
 
-module.exports = sendVerifications
+async function sendRegistration (username, mail, phone, phoneCode, emailCode) {
+
+  let email = ( mail, username ) => {
+    let msg = {
+      to: mail,
+      from: SENDGRID_VALID_EMAIL,
+      subject: 'Your Chocosfera Account was registered. Use code to verify',
+      text: `Hi ${ username || 'Dear customer' }! Your user account was registered. To verify it successfully, please enter this code -> ${emailCode} at email verification phase.`,
+      html: `<p>Hi ${ username || 'Dear customer' }! Your user account was registered. To verify it successfully, please enter this code -> ${emailCode} at email verification phase.</p>`
+    }
+    return msg
+  }
+
+  const msg = email( mail, username )
+
+  sms.messages
+    .create({
+      body: `Hi ${username || 'Dear customer'}! Your user account was registered. To verify it successfully, please enter this code -> ${phoneCode} at phone verification phase.`,
+      from: `${TWILIO_PHONE}`,
+      to: '+39' + phone
+    })
+    .then(message => console.log(message.sid))
+    .catch((error) => {console.error(error)})
+
+  sgMail.send(msg)
+    .then(console.log( "Email sent"))
+    .catch((error) => {console.error(error)})
+}
+
+module.exports = { sendRegistration, sendVerifications }
