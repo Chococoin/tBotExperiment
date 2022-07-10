@@ -29,8 +29,8 @@ const step1 = async (ctx) => {
         user.address = generateAddresses(user.passphrase[0])
         await user.save()
       }
-      ctx.reply(`No need to enter code. User already registered.\n${user.address}`)
-      if(user.address != 'none') ctx.reply(`Your chococoin temporal address is ${ user.address }`)
+      ctx.reply(`No need to enter code. User already registered.`)
+      if(user.address != 'none') ctx.reply(`Your ChocoCryptoDAO temporal address is ${ user.address }`)
       return ctx.scene.leave()
     }
   } else {
@@ -65,7 +65,7 @@ step2.on('message', async (ctx) => {
       ctx.reply('Phone and Email code confirmed.')
       user.address = generateAddresses(user.passphrase[0])
       await user.save()
-      ctx.reply(`Your chococoin temporal address is ${ user.address }`)
+      ctx.reply(`Your ChocoCryptoDAO temporal address is ${ user.address }`)
       sendVerifications(user.email, user.phone, user.username)
       return ctx.scene.leave()
     } else {
