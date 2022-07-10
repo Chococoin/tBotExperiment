@@ -1,6 +1,6 @@
 const { Scenes, Composer } = require('telegraf')
 const User = require('../Schemas/User.js')
-const sendVerifications = require('../utils/sendVerifications.js')
+const sendRegistration = require('../utils/sendVerifications.js').sendRegistration
 const randomCode = require('../utils/randomCode.js')
 const newUser = new User()
 let oldUserRegistered
@@ -50,8 +50,9 @@ step3.on('message', async (ctx) => {
     ctx.reply(`I have received your phone ${ctx.message.text}\nAfter receive verification codes by SMS and email you have to enter it clicking /verification.`)
     newUser.phone = ctx.message.text
     newUser.phoneCode = randomCode()
+    let _userName = newUser.name ? newUser.name : newUser.username
     newUser.sinceMessageID = ctx.update.message.from.id
-    sendVerifications(newUser.email, newUser.phone, newUser.phoneCode, newUser.emailCode)
+    sendRegistration(_userName, newUser.email, newUser.phone, newUser.phoneCode, newUser.emailCode)
     newUser.save()
     return ctx.scene.leave()
   } else {

@@ -1,6 +1,6 @@
 const { Scenes, Composer } = require('telegraf')
 const generateAddresses = require('../utils/generateAddresses.js')
-const sendVerifications = require('../utils/sendVerifications.js')
+const { sendVerifications } = require('../utils/sendVerifications.js')
 const User = require('../Schemas/User.js')
 let user
 
@@ -81,7 +81,7 @@ step2.on('message', async (ctx) => {
       ctx.reply('Phone and Email code confirmed.')
       user.address = generateAddresses(user.passphrase[0])
       await user.save()
-      ctx.reply(`Your chococoin temporal address is ${ user.address }`)
+      ctx.reply(`Your ChocoCryptoDAO temporal address is ${ user.address }`)
       sendVerifications(user.email, user.phone, user.username)
       return ctx.scene.leave()
     } else {
