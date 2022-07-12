@@ -53,13 +53,10 @@ async function setBestPrice(data, amount) {
   let req
   let firstBid = data.book.bids[0][0]
   let firstAsks = data.book.asks[0][0]
-  let firstBidWall = data.book.bids[0][1]
   let secondBid = data.book.bids[1][0]
-  let secondBidWall = data.book.bids[1][1]
-  let thirdBid = data.book.bids[1][0]
-  let thirdBidWall = data.book.bids[1][1]
+  let thirdBid = data.book.bids[2][0]
   let avgBidPrice = (firstBid + secondBid + thirdBid) / 3
-  let bestPrice = (avgBidPrice - avgBidPrice * 0.014).toFixed(5) * 10**18
+  let bestPrice = (avgBidPrice + avgBidPrice * 0.020).toFixed(5) * 10**18
   firstAsks = firstAsks.toFixed(5) * 10**18
   console.log("You must set best price!", bestPrice, firstAsks, firstBid)
   firstAsks = firstAsks.toString()
@@ -78,7 +75,7 @@ async function setBestPrice(data, amount) {
   } else {
     console.log("Ufaaa!")
   }
-  
+  return bestPrice
 }
 
 /*  ===== GASBALANCE ===== */
@@ -111,7 +108,6 @@ const gasBalance1 = async (ctx) => {
     ctx.reply(`${ user.username || 'Dear customer' }, you don't have anything as balance of gas in your account`)
   } else {
     ctx.reply(`${ user.username || 'Dear customer' }, you have only dust as balance of gas in your account`)
-
   }
   return ctx.scene.leave()
 }
@@ -124,7 +120,7 @@ const gasBalance = new Scenes.WizardScene('gasBalance',
 const gasLoad1 = async (ctx) => {
   let _gasBalance, qr
   let user = await User.findOne({ telegramID: ctx.update.callback_query.from.id })
-  if ( user && user.verifiedPhone && user.verifiedEmail) {
+  if ( user && user.verifiedPhone && user.verifiedEmail ) {
     try {
       _gasBalance = await web3.eth.getBalance(user.address) / 10**18
     } catch ( error ) {
@@ -169,7 +165,7 @@ const gasLoad = new Scenes.WizardScene('gasLoad',
 
 /**  ===== GASEXCHANGE ===== */
 
-let waitingConfirm, gasUserBalance, rawBalance, user ,gasMarketPrice
+let waitingConfirm, gasUserBalance, rawBalance, user, bestPrice
 const gasExchange1 = async (ctx) => {
   let res = await ctx.reply("Please wait some seconds while I arrange the exchange process.")
   user = await User.findOne({ telegramID: ctx.update.callback_query.from.id })
@@ -195,24 +191,13 @@ const gasExchange1 = async (ctx) => {
                   "Current Price in Sc": gasPriceInSc,
                   "Exchange Volume €": currentExchangeVolume,
                   "User Volume € Request": userVolumeEuroReq }])
-  if ( currentExchangePrice < gasPriceInSc && currentExchangeVolume > userVolumeEuroReq ) {
+  if ( currentExchangePrice != gasPriceInSc && currentExchangeVolume > userVolumeEuroReq ) {
     console.log("Setting new gas price in smart contract.")
-    let bestPrice = await setBestPrice(data, rawBalance)
-    bestPrice
-    let setNewPriceTx = await Contract.setTreasuryEuroPrice(currentExchangePrice * 10**18).call()
-    console.log(setNewPriceTx)
-    // let secs = 0
-    // waitingConfirm = setInterval( async () => {
-    //   if ( secs >= 30) {
-    //     clearInterval(waitingConfirm)
-    //     ctx.reply("You have overmatch 30 seconds to make a decision.\nTry again")
-    //     return ctx.scene.leave()
-    //   }
-    //   secs++
-    // }, 1000)
-  //If there not enough volume in the first offer of the ledger book 
+    bestPrice = await setBestPrice(data, rawBalance)
+    console.log("Set best price!!!!", bestPrice)
   } else {
-    setBestPrice(data, gasUserBalance)
+    //If there not enough volume in the first offer of the ledger book
+    ctx.reply("Something wrong was happened.")
   }
   await ctx.telegram.deleteMessage(ctx.chat.id, res.message_id)
   // console.log(gasUserBalance * data.book.asks[0][0])
@@ -242,7 +227,7 @@ gasExchange2.command('yes', async (ctx) => {
     try {
       amount = await sendOutsourcing(rawBalance, user.passphrase[0])
       console.log("From outSourcing", amount)
-      data = await exchangeCreateOrder(amount)
+      data = await exchangeCreateOrder(amount, bestPrice)
     } catch (error) {
       console.log(error)
       return ctx.scene.leave()
