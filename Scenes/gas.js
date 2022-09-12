@@ -170,7 +170,7 @@ const gasExchange1 = async (ctx) => {
   let res = await ctx.reply("Please wait some seconds while I arrange the exchange process.")
   user = await User.findOne({ telegramID: ctx.update.callback_query.from.id })
   // TODO: Set price in SmartContract
-  let data = await exchangeInfo()
+  let data = await exchangeInfo(_symbol)
   gasPriceInSc = await Contract.treasuryCoinPrice().call()
   gasPriceInSc = gasPriceInSc / 10**18
   console.log("Book & gasPriceInSc:")
@@ -227,12 +227,11 @@ gasExchange2.command('yes', async (ctx) => {
     try {
       amount = await sendOutsourcing(rawBalance, user.passphrase[0])
       console.log("From outSourcing", amount)
-      data = await exchangeCreateOrder(amount, bestPrice)
+      data = await exchangeCreateOrder(amount, bestPrice, user.telegramID)
     } catch (error) {
       console.log(error)
       return ctx.scene.leave()
     }
-    console.log("data.book")
   } else {
     ctx.reply("New feature coming soon.")
     return ctx.scene.leave()
@@ -264,7 +263,7 @@ const gasExchange = new Scenes.WizardScene('gasExchange',
 
 const gasPrice1 = async (ctx) => {
   let msg = await ctx.reply("Wait few seconds for exchange data")
-  let data = await exchangeInfo()
+  let data = await exchangeInfo( _symbol )
   let gasPriceInSc = await Contract.treasuryCoinPrice().call()
   await ctx.telegram.deleteMessage(ctx.chat.id, msg.message_id)
   ctx.reply(`Gas price in kraken.com/prices is €${data.book.bids[0][0]}.\nMinimum Gas balance to buy treasury is ${ (1 / data.book.bids[0][0]).toFixed(5)}  `)
