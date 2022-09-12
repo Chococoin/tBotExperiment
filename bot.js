@@ -14,8 +14,8 @@ const tokenTreeCreation = require('./Scenes/tokenTreeCreation')
 const noteUser = require('./utils/noteUser').noteUser
 const userRegister = require('./Scenes/userRegister').userRegister
 const userVerification = require('./Scenes/userVerification').userVerification
-const { gasLoad, gasBalance, gasExchange, gasCollector, gasInvest } = require('./Scenes/gas')
-const { treasuryBalance } = require('./Scenes/treasury')
+const { gasLoad, gasBalance, gasExchange, gasPrice, gasCollector, gasInvest } = require('./Scenes/gas')
+const { treasuryBalance, treasuryDAOBalance } = require('./Scenes/treasury')
 const dbCount = require('./utils/dbCount')
 const createLink = require('./utils/createLink')
 
@@ -23,11 +23,13 @@ const mongoose = require('mongoose')
 const User = require('./Schemas/User.js')
 
 db()
-  .then( () => console.log(`Mongo database connected`))
-  .catch( err => console.log(`Mongo database not connected ${err}`) )
+.then( () => console.log(`Mongo database connected`))
+.catch( err => console.log(`Mongo database not connected ${err}`) )
+
+let _symbol = process.env.KRAKEN_PAIR
 
 async function db() {
-  await mongoose.connect(process.env.MONGODB_URL1 || 'mongodb://127.0.0.1:27017/tBot')
+  await mongoose.connect(process.env.MONGODB_URL || 'mongodb://127.0.0.1:27017/tBot')
 }
 
 const telegramApiKey = fs.readFileSync(".telegramApiKey").toString().trim()
@@ -56,8 +58,10 @@ const stage = new Scenes.Stage(
     gasBalance,
     gasLoad,
     gasExchange,
+    gasPrice,
     userVerification,
-    treasuryBalance
+    treasuryBalance,
+    treasuryDAOBalance
   ]
 )
 app.use(session())
@@ -98,7 +102,7 @@ app.telegram.setMyCommands(
       description : 'Help Bot'
     },
   ]
-);
+)
 
 const products = [
   {
@@ -181,11 +185,16 @@ app.command('nft_tree_creation', (ctx) => {
 })
 
 app.command('account', (ctx) => {
-  let message = `Charge your profile with gas to pay transaction as NTF creation\nthen click the button bellow`
+  let message = `Refill your balance account with gas to create NFTs, characters or exchange Treasury points of your favorite project.`
   let options = Markup.inlineKeyboard([
-    Markup.button.callback('Gas Balance', 'gas_balance'),
-    Markup.button.callback('Gas Load', 'gas_load'),
-    Markup.button.callback('Gas Exchange', 'gas_exchange'),
+    [
+      { text: 'Gas Balance',  callback_data: 'gas_balance'},
+      { text: 'Gas Load',     callback_data: 'gas_load'},
+      { text: 'Gas Price',    callback_data: 'gas_price'}
+    ],
+    [
+      { text: 'Gas Exchange', callback_data: 'gas_exchange'}
+    ]
   ])
   ctx.reply(message, options)
 })
@@ -227,9 +236,15 @@ app.command('asklink', async ctx => {
 app.command('treasury_balance', async ctx => {
   let message = 'Check your Treasury total balance'
   let options = Markup.inlineKeyboard([
-    Markup.button.callback('Treasury Personal Balance', 'treasury_personal_balance'),
+    Markup.button.callback('Personal Balance', 'treasury_personal_balance'),
+    Markup.button.callback('DAO Balance', 'treasury_dao_balance'),
   ])
   ctx.reply(message, options)
+})
+
+app.command('treasury_dao_balance', async ctx => {
+  let a = await exchangeInfo()
+  console.log(a)
 })
 
 // TODO: Review commands
@@ -284,7 +299,7 @@ app.on('chat_join_request', async (ctx) => {
     console.log("To be approved...")
     try {
       await ctx.approveChatJoinRequest(referee)
-      ctx.reply(`Welcome ${ctx.update.chat_join_request.from.first_name}`)
+      ctx.reply(`Welcome ${ ctx.update.chat_join_request.from.first_name }`)
       console.log("APPROVED")
     } catch(e) {
       console.log("ERROR", e)
@@ -295,15 +310,17 @@ app.on('chat_join_request', async (ctx) => {
 })
 
 // User Actions
-app.action('user_register',      Scenes.Stage.enter('userRegister'))
-app.action('user_verification',  Scenes.Stage.enter('userVerification'))
-app.action('token_creation',     Scenes.Stage.enter('tokenCreation'))
-app.action('token_tree_creation', Scenes.Stage.enter('tokenTreeCreation'))
-app.action('gas_balance',        Scenes.Stage.enter('gasBalance'))
-app.action('gas_load',           Scenes.Stage.enter('gasLoad'))
-app.action('gas_collector',      Scenes.Stage.enter('gasCollector'))
-app.action('gas_invest',         Scenes.Stage.enter('gasInvest'))
-app.action('gas_exchange',       Scenes.Stage.enter('gasExchange'))
+app.action('user_register',        Scenes.Stage.enter('userRegister'))
+app.action('user_verification',    Scenes.Stage.enter('userVerification'))
+app.action('token_creation',       Scenes.Stage.enter('tokenCreation'))
+app.action('token_tree_creation',  Scenes.Stage.enter('tokenTreeCreation'))
+app.action('gas_balance',          Scenes.Stage.enter('gasBalance'))
+app.action('gas_load',             Scenes.Stage.enter('gasLoad'))
+app.action('gas_exchange',         Scenes.Stage.enter('gasExchange'))
+app.action('gas_price',            Scenes.Stage.enter('gasPrice'))
+app.action('gas_collector',        Scenes.Stage.enter('gasCollector'))
+app.action('gas_invest',           Scenes.Stage.enter('gasInvest'))
 app.action('treasury_personal_balance', Scenes.Stage.enter('treasuryBalance'))
+app.action('treasury_dao_balance', Scenes.Stage.enter('treasuryDAOBalance'))
 
 app.startPolling()
