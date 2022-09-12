@@ -12,3 +12,4 @@ build
 .moralisApiKey
 .snowtraceApiKey
 .env
+minty/artifacts/build-info
