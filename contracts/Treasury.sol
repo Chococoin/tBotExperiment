@@ -53,7 +53,7 @@ contract Treasury is ERC1155, Ownable, Pausable, ERC1155Burnable, ERC1155Supply 
     }
 
     function outSourcing() public payable {
-        require(msg.value >= 10 ** 18, "Value must be greader or equal than a crypto Unit.");
+        require(msg.value / treasuryCoinPrice >= 1, "Value must exchange at least one Treasury Unit.");
         (bool success, ) = treasuryBox.call{value: msg.value }("");
         treasuryBalanceOf[msg.sender] += msg.value * treasuryCoinPrice / multiplier ;
         treasuryBalance += msg.value * treasuryCoinPrice / multiplier;
