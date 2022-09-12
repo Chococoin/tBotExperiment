@@ -1,8 +1,8 @@
 {
-  "network": "matic",
+  "network": "localhost",
   "contract": {
     "name": "Minty",
-    "address": "0x8EeC92E8f5fD4eA4CAE9D791d6C0e5F48eF72461",
+    "address": "0x842186E5eB8337F077Ea20f73435D320c32BdC01",
     "signerAddress": "0x21CA3143BA96F6Df21C5C58e1120A0fe1074BB32",
     "abi": [
       "constructor(string tokenName, string symbol)",

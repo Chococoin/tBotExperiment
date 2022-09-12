@@ -31,15 +31,15 @@ const treasuryDAOBalance1 = async (ctx) => {
   try {
     balance = await exchangeInfo()
     balanceTreasuryBN = await Contract.treasuryBalance().call()
-    balanceEuro = balance.balance.EUR.total
-    balanceGas = balance.balance.MATIC.total
+    balanceEuro = balance.balance.EUR.total / 1
+    balanceGas = balance.balance.MATIC.total / 1
     balanceTreasury = await web3.utils.fromWei(balanceTreasuryBN) / 1
     ctx.telegram.deleteMessage(ctx.chat.id, msg.message_id)
   } catch (error) {
     console.log(error)
     ctx.reply("We're experiencing some difficulties with the exchange site.")
   }
-  ctx.reply(`Balance in Treasury is €${ balanceTreasury.toFixed(2) } :\nEUR : ${balanceEuro}\nGAS : ${balanceGas}`)
+  ctx.reply(`Balance in Treasury is €${ balanceTreasury.toFixed(2) } :\nEUR : ${balanceEuro.toFixed(2)}\nGAS : ${balanceGas.toFixed(2)}`)
   return ctx.scene.leave()
 }
 

@@ -13,6 +13,7 @@ let imagePath, description, title, user, currentStepIndex, caption
 const step1 = async (ctx) => {
   try {
     user = await User.findOne({ telegramID: ctx.update.callback_query.from.id })
+    console.log("User", user)
   } catch (err) {
     console.log(err)
     return ctx.scene.leave()
@@ -43,7 +44,7 @@ step2.command('cancel', (ctx) => {
 step2.on('photo', async (ctx) => {
   ctx.reply('I have received the image of your NFT.\nStep 2) Send me a title for your NFT.')
   let photos = ctx.update.message.photo
-  console.log(ctx.update.message.caption)
+  console.log("Caption:", ctx.update.message.caption)
   if ( ctx.update.message.caption ) caption = ctx.update.message.caption
   const { file_id: fileId } = photos[photos.length - 1]
   const { file_unique_id: fileUniqueId } = photos[photos.length - 1]
@@ -87,7 +88,8 @@ step4.on('message', async (ctx) => {
     description = ctx.update.message.text
     try {
       const NFTdata = await shell.exec(`minty mint ${ imagePath } --name "${ title }" --description "${ description }"`)
-      console.log(NFTdata) 
+      console.log("******************") 
+      console.log("NFT_DATA:", NFTdata) 
       if ( NFTdata.length === 0 ) {
         ctx.reply("Sorry, I'm having a problem with a bridge at this time.")
         return ctx.scene.leave()

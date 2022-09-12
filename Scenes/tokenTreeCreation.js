@@ -14,7 +14,7 @@ let imagePath, geoposition, lat, lon, lang, description, title, user, currentSte
 const step1 = async (ctx) => {
   try {
     user = await User.findOne({ telegramID: ctx.update.callback_query.from.id })
-    console.log(user)
+    console.log("User:", user)
   } catch (err) {
     console.log(err)
     return ctx.scene.leave()
@@ -138,6 +138,7 @@ step5.on('message', async (ctx) => {
       }
       const dataJson = NFTdataParser(NFTdata.stdout) 
       const NFTtransfer = await shell.exec(`minty transfer ${ dataJson.tokenId } ${ user.address }`)
+      console.log("**************\n", NFTtransfer)
       if(NFTtransfer.stdout) {
         ctx.reply("Your NFT was created. You are going to receive an sms and an email with details about you NFT.")
         sendNFTNotifications(user.email, user.phone, dataJson)

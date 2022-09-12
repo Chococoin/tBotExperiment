@@ -572,8 +572,8 @@
       ]
     },
     "/Volumes/ChocoFlash/Work/tBotExperiment/minty/contracts/Minty.sol": {
-      "lastModificationDate": 1653414616185,
-      "contentHash": "8fea90cbc6e27c78a1e02c86225aa267",
+      "lastModificationDate": 1655057343319,
+      "contentHash": "bc7ec667cdcc37ffc212ee8fd4f4dd7a",
       "sourceName": "contracts/Minty.sol",
       "solcConfig": {
         "version": "0.7.3",
@@ -598,7 +598,6 @@
         }
       },
       "imports": [
-        "hardhat/console.sol",
         "@openzeppelin/contracts/token/ERC721/ERC721.sol",
         "@openzeppelin/contracts/utils/Counters.sol"
       ],
