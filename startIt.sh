@@ -10,11 +10,13 @@ one(){
     npm start
     wait
     sleep 10
+    minty deploy    
     echo "End of minty/one"
 }
 
 # Deployment of NFT contract in local blockchain.
 two(){
+    sleep 8
     echo "Starts NFT deployment"
     yes | minty deploy && echo "Deployment of ChocoSpace."
     wait
@@ -24,6 +26,5 @@ two(){
     echo "Treasury Smart contract deployment ended."
 }
 
-two &
 one &
 two
