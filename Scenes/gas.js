@@ -8,7 +8,7 @@ const exchangeInfo = require('../utils/exchange').exchangeInfo
 const { Contract, web3 } = require('../utils/web4u.js')
 
 const fs = require('fs')
-
+const _symbol = process.env.KRAKEN_PAIR
 /*=================================UTILS===================================*/
 async function initializedIt( UserPrvKey ){
   require('dotenv').config()
@@ -228,6 +228,7 @@ gasExchange2.command('yes', async (ctx) => {
       amount = await sendOutsourcing(rawBalance, user.passphrase[0])
       console.log("From outSourcing", amount)
       data = await exchangeCreateOrder(amount, bestPrice, user.telegramID)
+      treasuryUserBalance = await web3.utils.fromWei(treasuryUserBalance) / 1
     } catch (error) {
       console.log(error)
       return ctx.scene.leave()
