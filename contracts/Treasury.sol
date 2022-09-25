@@ -12,6 +12,7 @@ contract Treasury is ERC1155, Ownable, Pausable, ERC1155Burnable, ERC1155Supply 
 
     uint public treasuryBalance;
     address payable public treasuryBox;
+    address payable public exchangeChannel;
 
     mapping ( address => uint256 ) public treasuryBalanceOf;
     mapping ( address => address ) public referer;
@@ -23,6 +24,8 @@ contract Treasury is ERC1155, Ownable, Pausable, ERC1155Burnable, ERC1155Supply 
     event SentFee(bytes _data);
     event Withdrawal(uint256 _value, address _address);
     event SettedReferer(address _refered, address _refering);
+    event SetExchangeChannel(address _address);
+    event SendToExchange(uint256 _value);
     event OutSourcing(address _sender, uint256 _value);
     event Assignment(address _sender, uint256 _value);
     event Bankruptcy(address _newOwner);
@@ -41,9 +44,15 @@ contract Treasury is ERC1155, Ownable, Pausable, ERC1155Burnable, ERC1155Supply 
         return address(this).balance;
     }
 
-    function withdrawMoney() public onlyOwner {
-        address payable to = payable(msg.sender);
-        to.transfer(getBalance());
+    function withdrawFunding() internal {
+        require(exchangeChannel != address(0), "Contract requires an exchange address.");
+        emit SendToExchange(getBalance());
+        exchangeChannel.transfer(getBalance());
+    }
+
+    function setExchangeAddress(address _address) public onlyOwner {
+        exchangeChannel = payable(_address);
+        emit SetExchangeChannel(_address);
     }
 
     function setReferer (address _referring, address _referred) public onlyOwner {
@@ -88,7 +97,7 @@ contract Treasury is ERC1155, Ownable, Pausable, ERC1155Burnable, ERC1155Supply 
         emit Withdrawal(_value, _address);
     }
 
-    function bankruptcy( ) public onlyOwner {
+    function bankruptcy() public onlyOwner {
         bool a = paused();
         require(a, "Must be paused to start bankrupcy");
         // TODO: return assets to creditors;
@@ -132,5 +141,15 @@ contract Treasury is ERC1155, Ownable, Pausable, ERC1155Burnable, ERC1155Supply 
         override(ERC1155, ERC1155Supply)
     {
         super._beforeTokenTransfer(operator, from, to, ids, amounts, data);
+    }
+
+    event ReceivedEth(uint256 amount);
+
+    receive() external payable  { 
+        withdrawFunding();
+    }
+
+    fallback() external payable {
+        withdrawFunding();
     }
 }
