@@ -67,4 +67,33 @@ async function sendRegistration (username, mail, phone, phoneCode, emailCode) {
     .catch((error) => {console.error(error)})
 }
 
-module.exports = { sendRegistration, sendVerifications }
+async function sendPollNotifications ( username, userPoolCreator, mail, phone ) {
+
+  let email = ( mail, username, userPoolCreator ) => {
+    let msg = {
+      to: mail,
+      from: SENDGRID_VALID_EMAIL,
+      subject: `A new Poll was created by ${ userPoolCreator }`,
+      text: `Hi ${ username || 'Dear customer' }, ${ userPoolCreator } has created a new poll. Don't miss the chance of make worth you opinion.`,
+      html: `<p>Hi ${ username || 'Dear customer' }, ${ userPoolCreator } has created a new poll. Don't miss the chance of make worth you opinion.`
+    }
+    return msg
+  }
+
+  const msg = email( mail, username )
+
+  sms.messages
+    .create({
+      body: `Hi ${ username || 'Dear customer '}, ${ userPoolCreator } has created a new poll. Don't miss the chance of make worth you opinion.`,
+      from: `${TWILIO_PHONE}`,
+      to: '+39' + phone
+    })
+    .then(message => console.log(message.sid))
+    .catch((error) => {console.error(error)})
+
+  sgMail.send(msg)
+    .then(console.log( "Email sent"))
+    .catch((error) => {console.error(error)})
+}
+
+module.exports = { sendRegistration, sendVerifications, sendPollNotifications }

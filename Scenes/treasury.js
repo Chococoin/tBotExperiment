@@ -3,6 +3,8 @@ const User = require('../Schemas/User.js')
 const { Contract, web3 } = require('../utils/web4u.js')
 const exchangeInfo = require('../utils/exchange').exchangeInfo
 
+let _symbol = process.env.KRAKEN_PAIR
+
 const treasuryBalance1 = async (ctx) => {
   let user, balance, balanceGas, balanceEuro
   try {
@@ -29,7 +31,7 @@ const treasuryDAOBalance1 = async (ctx) => {
   let msg = await ctx.reply("Please wait few seconds until an exchange response.")
   let balanceTreasury, balanceTreasuryBN, balance
   try {
-    balance = await exchangeInfo()
+    balance = await exchangeInfo(_symbol)
     balanceTreasuryBN = await Contract.treasuryBalance().call()
     balanceEuro = balance.balance.EUR.total / 1
     balanceGas = balance.balance.MATIC.total / 1
@@ -39,7 +41,7 @@ const treasuryDAOBalance1 = async (ctx) => {
     console.log(error)
     ctx.reply("We're experiencing some difficulties with the exchange site.")
   }
-  ctx.reply(`Balance in Treasury is €${ balanceTreasury.toFixed(2) } :\nEUR : ${balanceEuro.toFixed(2)}\nGAS : ${balanceGas.toFixed(2)}`)
+  ctx.reply(`Balance in Treasury is €${ balanceTreasury.toFixed(2) } :\nEUR : ${balanceEuro.toFixed(2)}\nGAS : ${balanceGas.toFixed(2)}\nTotal: ${balanceEuro.toFixed(2) * balanceGas.toFixed(2)}`)
   return ctx.scene.leave()
 }
 

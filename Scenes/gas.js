@@ -228,7 +228,11 @@ gasExchange2.command('yes', async (ctx) => {
       amount = await sendOutsourcing(rawBalance, user.passphrase[0])
       console.log("From outSourcing", amount)
       data = await exchangeCreateOrder(amount, bestPrice, user.telegramID)
-      treasuryUserBalance = await web3.utils.fromWei(treasuryUserBalance) / 1
+      // if(treasuryUserBalance > 0) {
+      //   treasuryUserBalance = await web3.utils.fromWei(treasuryUserBalance) / 1
+      // } else {
+      //   treasuryUserBalance = 0
+      // }
     } catch (error) {
       console.log(error)
       return ctx.scene.leave()
@@ -239,8 +243,8 @@ gasExchange2.command('yes', async (ctx) => {
   }
   ctx.telegram.deleteMessage(ctx.chat.id, res.message_id)
   ctx.reply(`You have exchanged your gas for Treasury Point.\n\
-             Right now you have ${ treasuryUserBalance.toFixed(5) } of treasury Balance `)
-  if ( treasuryUserBalance == 0 ) ctx.reply("Are you trying to fool me 👹?.")
+    Right now you have ${ treasuryUserBalance.toFixed(5) } of treasury Balance `)
+  // if ( treasuryUserBalance == 0 ) ctx.reply("Are you trying to fool me 👹?.")
   return ctx.scene.leave()
 })
 

@@ -4,7 +4,7 @@ require('dotenv').config()
 const { Scenes, Composer } = require('telegraf')
 const fileManager = require('../utils/fileManager')
 const shell = require('shelljs')
-const sendNFTNotifications = require('../utils/sendNotifications.js').sendNTFNotifications
+const sendNFTNotifications = require('../utils/sendNotifications.js').sendNFTNotifications
 const NFTdataParser = require('../utils/NFTdataParser.js')
 const User = require('../Schemas/User.js')
 

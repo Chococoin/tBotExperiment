@@ -14,13 +14,16 @@ const tokenTreeCreation = require('./Scenes/tokenTreeCreation')
 const noteUser = require('./utils/noteUser').noteUser
 const userRegister = require('./Scenes/userRegister').userRegister
 const userVerification = require('./Scenes/userVerification').userVerification
+const adoptATree = require('./Scenes/adoptATree')
 const { gasLoad, gasBalance, gasExchange, gasPrice, gasCollector, gasInvest } = require('./Scenes/gas')
 const { treasuryBalance, treasuryDAOBalance } = require('./Scenes/treasury')
 const dbCount = require('./utils/dbCount')
 const createLink = require('./utils/createLink')
+const sendPollNotifications = require('./utils/sendNotifications').sendPollNotifications
 
 const mongoose = require('mongoose')
 const User = require('./Schemas/User.js')
+const pollCreation = require('./Schemas/pollCreations')
 
 db()
 .then( () => console.log(`Mongo database connected`))
@@ -61,7 +64,8 @@ const stage = new Scenes.Stage(
     gasPrice,
     userVerification,
     treasuryBalance,
-    treasuryDAOBalance
+    treasuryDAOBalance,
+    adoptATree,
   ]
 )
 app.use(session())
@@ -81,9 +85,14 @@ app.telegram.setMyCommands(
       command     : '/treasury_balance',
       description : 'Treasury Balance'
     },
+    // TODO: Create a character for the chocosfera
+    // {
+    //   command     : '/create_a_character',
+    //   description : 'Create a new character'
+    // },
     {
-      command     : '/create_a_character',
-      description : 'Create a new character'
+      command: '/adopt_a_tree',
+      description : 'Adopt a tree'
     },
     {
       command     : '/play_video',
@@ -175,14 +184,26 @@ app.command('nft_creation', (ctx) => {
   ctx.reply(message, options)
 })
 
-app.command('nft_tree_creation', (ctx) => {
+app.command('adopt_a_tree', (ctx) => {
   let userFirstName = ctx.message.from.first_name
-  let message = `Hello ${userFirstName}, ready to create an NFT-TREE 🌳?`
+  let message = `${userFirstName}, you're about to adopt a Tree.\n` +
+  `1) Look for the tree do you want to adopt.\n` +
+  `2) Use your gas to close the transaction.\n` +
+  `3) Don't forget to share the good new on your favorite social network.`
   let options = Markup.inlineKeyboard([
-    Markup.button.callback('Create an NFT-TREE 🌳', 'token_tree_creation'),
+    Markup.button.callback('Adopt a Tree 🌳', 'adopt_a_tree'),
   ])
   ctx.reply(message, options)
 })
+
+// app.command('/create_poll', (ctx) => {
+//   let userFirstName = ctx.message.from.first_name
+//   let message = `Hello ${userFirstName}, ready to create a poll 🗒️ to ?`
+//   let options = Markup.inlineKeyboard([
+//     Markup.button.callback('Create a poll 🗒️', 'poll_creation'),
+//   ])
+//   ctx.reply(message, options)
+// })
 
 app.command('account', (ctx) => {
   let message = `Refill your balance account with gas to create NFTs, characters or exchange Treasury points of your favorite project.`
@@ -270,8 +291,6 @@ app.command('help', async (ctx) => {
 // app.command('status', (ctx) => {
   
 // })
-// TODO: Add sessions
-
 
 // Order product
 products.forEach(p => {
@@ -309,6 +328,38 @@ app.on('chat_join_request', async (ctx) => {
   }
 })
 
+// Poll response
+app.on('poll', async ctx => {
+  let user
+  let pollCase = ctx.update.poll
+  if ( ctx.update.message ) {
+    console.log("A poll was created", ctx.update.message.poll)
+    console.log("Poll ID", ctx.update.message.poll.id)
+    try { 
+      user = await User.findOne({ telegrafID: ctx.update.message.from.id })
+      console.log(user._id)
+      const newPoll = new pollCreation()
+      newPoll.user = user._id
+      newPoll.pollTelegramId = ctx.update.message.poll.id
+      await newPoll.save()
+    } catch (err) {
+      console.log(err)
+    }
+    try {
+      sendPollNotifications(user)
+    } catch (err) {
+      console.log(err)
+    }
+  } 
+  if ( pollCase ) {
+    if (pollCase.is_closed) {
+
+      // TODO: Send real notifications.
+      console.log("When a poll is deleted all the users of the group will receive a message", pollCase)
+    }
+  }
+})
+
 // User Actions
 app.action('user_register',        Scenes.Stage.enter('userRegister'))
 app.action('user_verification',    Scenes.Stage.enter('userVerification'))
@@ -322,5 +373,6 @@ app.action('gas_collector',        Scenes.Stage.enter('gasCollector'))
 app.action('gas_invest',           Scenes.Stage.enter('gasInvest'))
 app.action('treasury_personal_balance', Scenes.Stage.enter('treasuryBalance'))
 app.action('treasury_dao_balance', Scenes.Stage.enter('treasuryDAOBalance'))
+app.action('adopt_a_tree',         Scenes.Stage.enter('adoptATree'))
 
 app.startPolling()

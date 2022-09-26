@@ -6,6 +6,8 @@ const saveOrder = require('../utils/saveOrder').saveOrder
 
 const exchange = new ccxt.kraken({ apiKey: process.env.KRAKEN_APIKEY, secret: process.env.KRAKEN_SECRET })
 
+// let _symbol = process.env.KRAKEN_PAIR
+
 async function exchangeInfo( _symbol  ) {
   // Get MATIC/EUR pair with # 337
   let pair
@@ -17,7 +19,7 @@ async function exchangeInfo( _symbol  ) {
     }
   })
   let book = await exchange.fetchOrderBook( exchange.symbols[pair])
-  console.log("Symbols:", symbols)
+  // console.log("Symbols:", symbols)
 
   let balance = await exchange.fetchBalance()
   const data = { book, balance }

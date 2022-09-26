@@ -2,6 +2,7 @@
 
 # Starts a local blockcahin and a ipfs deamon-server.
 one(){
+    # startOne=$SECONDS
     pwd
     echo "Out of minty"
     cd minty
@@ -9,22 +10,31 @@ one(){
     echo "In minty directory"
     npm start
     wait
-    sleep 10
-    minty deploy    
-    echo "End of minty/one"
+    # duration=$(( SECONDS - startOne ))
+    # echo "One ends at: $duration"
 }
 
 # Deployment of NFT contract in local blockchain.
 two(){
-    sleep 8
+    sleep 6
+    # startTwo=$SECONDS
+    cd minty
     echo "Starts NFT deployment"
     yes | minty deploy && echo "Deployment of ChocoSpace."
     wait
     echo "NTF deployment Ended"
     echo "Starts Treasury Smart contracts deployment."
     cd .. && pwd && truffle migrate --network development
-    echo "Treasury Smart contract deployment ended."
+    wait
+    # duration=$(( SECONDS - startTwo ))
+    # echo "Treasury Smart contract deployment ended at $duration."
+}
+
+three(){
+    sleep 15
+    nodemon bot.js
 }
 
 one &
-two
+two &
+three
