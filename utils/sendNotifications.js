@@ -40,7 +40,7 @@ async function sendNotifications (mail, phone) {
     .catch((error) => {console.error(error)})
 }
 
-async function sendNTFNotifications (mail, phone, NFTdata) {
+async function sendNFTNotifications (mail, phone, NFTdata) {
   let email = ( mail ) => {
     let msg = {
       to: mail,
